@@ -1,11 +1,11 @@
 from struct import *
 
 # TODO:
-# GSA Sentence
 # GSV Sentence
 # Time Since First Fix
 # Time Since Last Good Fix
 # Statistics
+# Sentence size bound checking
 
 test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62',
             '$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A',
@@ -16,7 +16,8 @@ test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62'
 
 test_VTG = ['$GPVTG,232.9,T,,M,002.3,N,004.3,K,A*01']
 test_GGA = ['$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C']
-test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37']
+test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37',
+            '$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33']
 test_GSV = ['$GPGSV,3,1,12,28,72,355,39,01,52,063,33,17,51,272,44,08,46,184,38*74',
             '$GPGSV,3,2,12,24,42,058,33,11,34,053,33,07,20,171,40,20,15,116,*71',
             '$GPGSV,3,3,12,04,12,204,34,27,11,324,35,32,11,089,,26,10,264,40*7B']
@@ -52,8 +53,9 @@ class MicroGPSpy(object):
         self.geoid_height = 0.0
 
         # GPS Info
-        self.sats_in_view = 0
-        self.sats_in_use = 0
+        self.satellites_in_view = 0
+        self.satellites_in_use = 0
+        self.satellites_used = []
         self.hdop = 0.0
         self.pdop = 0.0
         self.vdop = 0.0
@@ -64,7 +66,6 @@ class MicroGPSpy(object):
         # Object Constants
         self.__hemispheres = ('N', 'S', 'E', 'W')
 
-    # Recommended minimum specific GPS/Transit data
     def gprmc(self):
         """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence. Updates UTC timestamp, latitude,
         longitude, Course, Speed, and Date"""
@@ -177,7 +178,7 @@ class MicroGPSpy(object):
 
         # Number of Satellites in Use
         try:
-            self.sats_in_use = int(self.gps_segments[7])
+            self.satellites_in_use = int(self.gps_segments[7])
         except ValueError:
             return False
 
@@ -231,10 +232,48 @@ class MicroGPSpy(object):
             self.altitude = altitude
             self.geoid_height = geoid_height
 
-            return True
+        return True
 
     def gpgsa(self):
-        pass
+        """Parse GNSS DOP and Active Satellites (GSA) sentence. Updates GPS fix type, list of satellites used in
+        fix calculation, Position Dilution of Precision (PDOP), Horizontal Dilution of Precision (HDOP), and Vertical
+        Dilution of Precision"""
+
+        # Fix Type (None,2D or 3D)
+        try:
+            fix_type = int(self.gps_segments[2])
+        except ValueError:
+            return False
+
+        # Read All (up to 12) Available PRN Satellite Numbers
+        sats_used = []
+        for sats in range(12):
+            sat_number_str = self.gps_segments[3 + sats]
+            if sat_number_str:
+                try:
+                    sat_number = int(sat_number_str)
+                    sats_used.append(sat_number)
+                except ValueError:
+                    return False
+            else:
+                break
+
+        # PDOP,HDOP,VDOP
+        try:
+            pdop = float(self.gps_segments[15])
+            hdop = float(self.gps_segments[16])
+            vdop = float(self.gps_segments[17])
+        except ValueError:
+            return False
+
+        # Update Object Data
+        self.fix_type = fix_type
+        self.satellites_used = sats_used
+        self.hdop = hdop
+        self.vdop = vdop
+        self.pdop = pdop
+
+        return True
 
     def gpgsv(self):
         pass
@@ -360,4 +399,18 @@ if __name__ == "__main__":
         print('Altitude:', my_gps.altitude)
         print('Height Above Geoid:', my_gps.geoid_height)
         print('Horizontal Dilution of Precision:', my_gps.hdop)
-        print('Satellites in Use by Receiver:', my_gps.sats_in_use)
+        print('Satellites in Use by Receiver:', my_gps.satellites_in_use)
+        print('')
+
+    for GSA_sentence in test_GSA:
+        for y in GSA_sentence:
+            sentence = my_gps.update(y)
+        print('Parsed a', sentence, 'Sentence')
+        print('Parsed Strings', my_gps.gps_segments)
+        print('Sentence CRC Value:', hex(my_gps.crc_xor))
+        print('Satellites Used', my_gps.satellites_used)
+        print('Fix Type Code:', my_gps.fix_type)
+        print('Horizontal Dilution of Precision:', my_gps.hdop)
+        print('Vertical Dilution of Precision:', my_gps.vdop)
+        print('Position Dilution of Precision:', my_gps.pdop)
+        print('')
