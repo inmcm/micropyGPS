@@ -20,27 +20,10 @@
 
 
 # TODO:
-# GSV Sentence
 # Time Since First Fix
 # Time Since Last Good Fix
 # Statistics
 # Sentence size bound checking
-
-test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62',
-            '$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A',
-            '$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68',
-            '$GPRMC,180041.896,A,3749.1851,N,08338.7891,W,001.9,154.9,240911,,,A*7A',
-            '$GPRMC,180049.896,A,3749.1808,N,08338.7869,W,001.8,156.3,240911,,,A*70',
-            '$GPRMC,092751.000,A,5321.6802,N,00630.3371,W,0.06,31.66,280511,,,A*45']
-
-test_VTG = ['$GPVTG,232.9,T,,M,002.3,N,004.3,K,A*01']
-test_GGA = ['$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C']
-test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37',
-            '$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33']
-test_GSV = ['$GPGSV,3,1,12,28,72,355,39,01,52,063,33,17,51,272,44,08,46,184,38*74',
-            '$GPGSV,3,2,12,24,42,058,33,11,34,053,33,07,20,171,40,20,15,116,*71',
-            '$GPGSV,3,3,12,04,12,204,34,27,11,324,35,32,11,089,,26,10,264,40*7B']
-
 
 class MicropyGPS(object):
     """GPS NMEA Sentence Parser. Creates object that stores all relevant GPS data and statistics.
@@ -76,6 +59,9 @@ class MicropyGPS(object):
         self.satellites_in_view = 0
         self.satellites_in_use = 0
         self.satellites_used = []
+        self.last_sv_sentence = 0
+        self.total_sv_sentences = 0
+        self.satellite_data = dict()
         self.hdop = 0.0
         self.pdop = 0.0
         self.vdop = 0.0
@@ -296,7 +282,56 @@ class MicropyGPS(object):
         return True
 
     def gpgsv(self):
-        pass
+        """Parse Satellites in View (GSV) sentence. Updates number of SV Sentences,the number of the last SV sentence
+        parsed"""
+        try:
+            number_of_sv_sentences = int(self.gps_segments[1])
+            current_sv_sentence = int(self.gps_segments[2])
+            satellites_in_view = int(self.gps_segments[3])
+        except ValueError:
+            return False
+
+        # Create a blank dict to store all the satellite data from this sentence in:
+        # satellite PRN is key, tuple containing telemetry is value
+        satellite_dict = dict()
+
+        # Try to recover data for up to 4 satellites in sentence
+        for sats in range(4, 20, 4):
+
+            # If a PRN is present, grab satellite data
+            if self.gps_segments[sats]:
+                try:
+                    sat_id = int(self.gps_segments[sats])
+                    elevation = int(self.gps_segments[sats+1])
+                    azimuth = int(self.gps_segments[sats+2])
+                except ValueError:
+                    return False
+
+                try:  # SNR can be null (no value) when not tracking
+                    snr = int(self.gps_segments[sats+3])
+                except ValueError:
+                    snr = None
+
+            # If no PRN is found, then the sentence has no more satellites to read
+            else:
+                break
+
+            # Add Satellite Data to Sentence Dict
+            satellite_dict[sat_id] = (elevation, azimuth, snr)
+
+        # Update Object Data
+        self.total_sv_sentences = number_of_sv_sentences
+        self.last_sv_sentence = current_sv_sentence
+        self.satellites_in_view = satellites_in_view
+
+        # For a new set of sentences, we either clear out the existing sat data or
+        # update it as additional SV sentences are parsed
+        if current_sv_sentence == 1:
+            self.satellite_data = satellite_dict
+        else:
+            self.satellite_data.update(satellite_dict)
+
+        return True
 
     def new_sentence(self):
         """Adjust Object Flags in Preparation for a New Sentence"""
@@ -373,11 +408,49 @@ class MicropyGPS(object):
         # Tell Host no new sentence was parsed
         return None
 
+    # User Helper Functions
+    # These functions make working with the GPS object data a little easier
+
+    def satellite_data_updated(self):
+        """
+        Checks if the all the GSV sentences in a group have been read, making satellite data complete
+        :return: boolean
+        """
+        if self.total_sv_sentences > 0 and self.total_sv_sentences == self.last_sv_sentence:
+            return True
+        else:
+            return False
+
+    def satellites_visible(self):
+        """
+        Returns a list of of the satellite PRNs currently visible to the receiver
+        :return: list
+        """
+        return list(self.satellite_data.keys())
+
     # All the currently supported NMEA sentences    
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
 
 
 if __name__ == "__main__":
+
+    test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62',
+                '$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A',
+                '$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68',
+                '$GPRMC,180041.896,A,3749.1851,N,08338.7891,W,001.9,154.9,240911,,,A*7A',
+                '$GPRMC,180049.896,A,3749.1808,N,08338.7869,W,001.8,156.3,240911,,,A*70',
+                '$GPRMC,092751.000,A,5321.6802,N,00630.3371,W,0.06,31.66,280511,,,A*45']
+
+    test_VTG = ['$GPVTG,232.9,T,,M,002.3,N,004.3,K,A*01']
+    test_GGA = ['$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C']
+    test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37',
+                '$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33']
+    test_GSV = ['$GPGSV,3,1,12,28,72,355,39,01,52,063,33,17,51,272,44,08,46,184,38*74',
+                '$GPGSV,3,2,12,24,42,058,33,11,34,053,33,07,20,171,40,20,15,116,*71',
+                '$GPGSV,3,3,12,04,12,204,34,27,11,324,35,32,11,089,,26,10,264,40*7B',
+                '$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74',
+                '$GPGSV,3,2,11,14,25,170,00,16,57,208,39,18,67,296,40,19,40,246,00*74',
+                '$GPGSV,3,3,11,22,42,067,42,24,14,311,43,27,05,244,00,,,,*4D']
 
     my_gps = MicropyGPS()
     sentence = ''
@@ -433,4 +506,20 @@ if __name__ == "__main__":
         print('Horizontal Dilution of Precision:', my_gps.hdop)
         print('Vertical Dilution of Precision:', my_gps.vdop)
         print('Position Dilution of Precision:', my_gps.pdop)
+        print('')
+
+    for GSV_sentence in test_GSV:
+        for y in GSV_sentence:
+            sentence = my_gps.update(y)
+        print('Parsed a', sentence, 'Sentence')
+        print('Parsed Strings', my_gps.gps_segments)
+        print('Sentence CRC Value:', hex(my_gps.crc_xor))
+        print('SV Sentences Parsed', my_gps.last_sv_sentence)
+        print('SV Sentences in Total', my_gps.total_sv_sentences)
+        print('# of Satellites in View:', my_gps.satellites_in_view)
+        data_valid = my_gps.satellite_data_updated()
+        print('Is Satellite Data Valid?:', data_valid)
+        if data_valid:
+            print('Satellite Data:', my_gps.satellite_data)
+            print('Satellites Visible:', my_gps.satellites_visible())
         print('')
