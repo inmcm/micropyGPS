@@ -356,14 +356,14 @@ class MicropyGPS(object):
             # Check if a new string is starting ($)
             if new_char == '$':
                 self.new_sentence()
-                return False
+                return None
 
             # Check if sentence is ending (*)
             elif new_char == '*':
                 self.process_crc = False
                 self.active_segment += 1
                 self.gps_segments.append('')
-                return False
+                return None
 
             # Check if a section is ended (,), Create a new substring to feed
             # characters to
@@ -408,8 +408,10 @@ class MicropyGPS(object):
         # Tell Host no new sentence was parsed
         return None
 
+    #########################################
     # User Helper Functions
-    # These functions make working with the GPS object data a little easier
+    # These functions make working with the GPS object data easier
+    #########################################
 
     def satellite_data_updated(self):
         """
