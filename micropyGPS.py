@@ -29,6 +29,9 @@ class MicropyGPS(object):
     """GPS NMEA Sentence Parser. Creates object that stores all relevant GPS data and statistics.
     Parses sentences one character at a time using update(). """
 
+    # Max Number of Characters a valid sentence can be (based on GGA sentence)
+    SENTENCE_LIMIT = 76
+
     def __init__(self, local_offset=0):
         """Setup GPS Object Status Flags, Internal Data Registers, etc"""
 
@@ -39,6 +42,7 @@ class MicropyGPS(object):
         self.process_crc = False
         self.gps_segments = []
         self.crc_xor = 0
+        self.char_count = 0
 
         #####################
         # Data From Sentences
@@ -342,6 +346,7 @@ class MicropyGPS(object):
         self.crc_xor = 0
         self.sentence_active = True
         self.process_crc = True
+        self.char_count = 0
 
     def update(self, new_char):
         """Process a new input char and updates GPS object if necessary based on special characters ('$', ',', '*')
@@ -354,28 +359,30 @@ class MicropyGPS(object):
         ascii_char = ord(new_char)
 
         if 33 <= ascii_char <= 126:
+            self.char_count += 1
 
             # Check if a new string is starting ($)
             if new_char == '$':
                 self.new_sentence()
                 return None
 
-            # Check if sentence is ending (*)
-            elif new_char == '*' and self.sentence_active:
-                self.process_crc = False
-                self.active_segment += 1
-                self.gps_segments.append('')
-                return None
+            elif self.sentence_active:
 
-            # Check if a section is ended (,), Create a new substring to feed
-            # characters to
-            elif new_char == ',' and self.sentence_active:
-                self.active_segment += 1
-                self.gps_segments.append('')
+                # Check if sentence is ending (*)
+                if new_char == '*':
+                    self.process_crc = False
+                    self.active_segment += 1
+                    self.gps_segments.append('')
+                    return None
 
-            # Store All Other printable character and check CRC when ready
-            else:
-                if self.sentence_active:
+                # Check if a section is ended (,), Create a new substring to feed
+                # characters to
+                elif new_char == ',':
+                    self.active_segment += 1
+                    self.gps_segments.append('')
+
+                # Store All Other printable character and check CRC when ready
+                else:
                     self.gps_segments[self.active_segment] += new_char
 
                     # When CRC input is disabled, sentence is nearly complete
@@ -389,23 +396,27 @@ class MicropyGPS(object):
                             except ValueError:
                                 pass  # CRC Value was deformed and could not have been correct
 
-            # Update CRC
-            if self.process_crc:
-                self.crc_xor ^= ascii_char
+                # Update CRC
+                if self.process_crc:
+                    self.crc_xor ^= ascii_char
 
-        # If a Valid Sentence Was received and it's a supported sentence, then
-        # parse it!!
-        if valid_sentence and self.gps_segments[0] in self.supported_sentences:
+                # If a Valid Sentence Was received and it's a supported sentence, then parse it!!
+                if valid_sentence :
 
-            # Clear Active Processing Flag
-            self.sentence_active = False
+                    # Clear Active Processing Flag
+                    self.sentence_active = False
+                    if self.gps_segments[0] in self.supported_sentences:
 
-            # parse the Sentence Based on the message type, return True if
-            # parse is clean
-            if self.supported_sentences[self.gps_segments[0]](self):
-                # Let host know that the GPS object was updated by returning
-                # parsed sentence type
-                return self.gps_segments[0]
+                        # parse the Sentence Based on the message type, return True if parse is clean
+                        if self.supported_sentences[self.gps_segments[0]](self):
+
+                            # Let host know that the GPS object was updated by returning parsed sentence type
+                            return self.gps_segments[0]
+
+                # Check that the sentence buffer isn't filling up with Garage waiting for the sentence to complete
+                if self.char_count > self.SENTENCE_LIMIT:
+                    self.sentence_active = False
+
 
         # Tell Host no new sentence was parsed
         return None
@@ -434,6 +445,8 @@ class MicropyGPS(object):
 
     # All the currently supported NMEA sentences    
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
+
+
 
 
 if __name__ == "__main__":
