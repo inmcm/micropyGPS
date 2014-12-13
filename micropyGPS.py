@@ -170,38 +170,34 @@ class MicropyGPS(object):
         """Parse Global Positioning System Fix Data (GGA) Sentence. Updates UTC timestamp, latitude, longitude,
         fix status, satellites in use, Horizontal Dilution of Precision (HDOP), altitude, and geoid height"""
 
-        # UTC Timestamp
         try:
+            # UTC Timestamp
             utc_string = self.gps_segments[1]
+
             # Skip timestamp if receiver doesn't have on yet
             if utc_string:
                 hours = int(utc_string[0:2]) + self.local_offset
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
-                self.timestamp = (hours, minutes, seconds)
-        except ValueError:
-            return False
+            else:
+                hours = 0
+                minutes = 0
+                seconds = 0.0
 
-        # Number of Satellites in Use
-        try:
-            self.satellites_in_use = int(self.gps_segments[7])
-        except ValueError:
-            return False
+            # Number of Satellites in Use
+            satellites_in_use = int(self.gps_segments[7])
 
-        # Horizontal Dilution of Precision
-        try:
-            self.hdop = float(self.gps_segments[8])
-        except ValueError:
-            return False
+            # Horizontal Dilution of Precision
+            hdop = float(self.gps_segments[8])
 
-        # Get Fix Status
-        try:
-            self.fix_stat = int(self.gps_segments[6])
+            # Get Fix Status
+            fix_stat = int(self.gps_segments[6])
+
         except ValueError:
             return False
 
         # Process Location and Speed Data if Fix is GOOD
-        if self.fix_stat:
+        if fix_stat:
 
             # Longitude / Latitude
             try:
@@ -237,6 +233,12 @@ class MicropyGPS(object):
             self.longitude = (lon_degs, lon_mins, lon_hemi)
             self.altitude = altitude
             self.geoid_height = geoid_height
+
+        # Update Object Data
+        self.timestamp = (hours, minutes, seconds)
+        self.satellites_in_use = satellites_in_use
+        self.hdop = hdop
+        self.fix_stat = fix_stat
 
         return True
 
@@ -359,7 +361,7 @@ class MicropyGPS(object):
                 return None
 
             # Check if sentence is ending (*)
-            elif new_char == '*':
+            elif new_char == '*' and self.sentence_active:
                 self.process_crc = False
                 self.active_segment += 1
                 self.gps_segments.append('')
@@ -367,7 +369,7 @@ class MicropyGPS(object):
 
             # Check if a section is ended (,), Create a new substring to feed
             # characters to
-            elif new_char == ',':
+            elif new_char == ',' and self.sentence_active:
                 self.active_segment += 1
                 self.gps_segments.append('')
 
