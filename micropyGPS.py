@@ -22,8 +22,11 @@
 # TODO:
 # Time Since First Fix
 # Time Since Last Good Fix
-# Statistics
-# Sentence size bound checking
+# Distance/Time to Target
+# Logging
+# More Helper Functions
+# Dynamiclly limit sentences types to parse
+
 
 class MicropyGPS(object):
     """GPS NMEA Sentence Parser. Creates object that stores all relevant GPS data and statistics.
@@ -31,6 +34,7 @@ class MicropyGPS(object):
 
     # Max Number of Characters a valid sentence can be (based on GGA sentence)
     SENTENCE_LIMIT = 76
+    __HEMISPHERES = ('N', 'S', 'E', 'W')
 
     def __init__(self, local_offset=0):
         """Setup GPS Object Status Flags, Internal Data Registers, etc"""
@@ -43,6 +47,12 @@ class MicropyGPS(object):
         self.gps_segments = []
         self.crc_xor = 0
         self.char_count = 0
+
+        #####################
+        # Sentence Statistics
+        self.crc_fails = 0
+        self.clean_sentences = 0
+        self.parsed_sentences = 0
 
         #####################
         # Data From Sentences
@@ -72,9 +82,6 @@ class MicropyGPS(object):
         self.valid = False
         self.fix_stat = 0
         self.fix_type = 1
-
-        # Object Constants
-        self.__hemispheres = ('N', 'S', 'E', 'W')
 
     def gprmc(self):
         """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence. Updates UTC timestamp, latitude,
@@ -111,10 +118,10 @@ class MicropyGPS(object):
             except ValueError:
                 return False
 
-            if lat_hemi not in self.__hemispheres:
+            if lat_hemi not in self.__HEMISPHERES:
                 return False
 
-            if lon_hemi not in self.__hemispheres:
+            if lon_hemi not in self.__HEMISPHERES:
                 return False
 
             # Speed
@@ -219,10 +226,10 @@ class MicropyGPS(object):
             except ValueError:
                 return False
 
-            if lat_hemi not in self.__hemispheres:
+            if lat_hemi not in self.__HEMISPHERES:
                 return False
 
-            if lon_hemi not in self.__hemispheres:
+            if lon_hemi not in self.__HEMISPHERES:
                 return False
 
             # Altitude / Height Above Geoid
@@ -393,6 +400,8 @@ class MicropyGPS(object):
                                 final_crc = int(self.gps_segments[self.active_segment], 16)
                                 if self.crc_xor == final_crc:
                                     valid_sentence = True
+                                else:
+                                    self.crc_fails += 1
                             except ValueError:
                                 pass  # CRC Value was deformed and could not have been correct
 
@@ -402,15 +411,16 @@ class MicropyGPS(object):
 
                 # If a Valid Sentence Was received and it's a supported sentence, then parse it!!
                 if valid_sentence:
+                    self.clean_sentences += 1  # Increment clean sentences received
+                    self.sentence_active = False  # Clear Active Processing Flag
 
-                    # Clear Active Processing Flag
-                    self.sentence_active = False
                     if self.gps_segments[0] in self.supported_sentences:
 
                         # parse the Sentence Based on the message type, return True if parse is clean
                         if self.supported_sentences[self.gps_segments[0]](self):
 
                             # Let host know that the GPS object was updated by returning parsed sentence type
+                            self.parsed_sentences += 1
                             return self.gps_segments[0]
 
                 # Check that the sentence buffer isn't filling up with Garage waiting for the sentence to complete
@@ -447,6 +457,8 @@ class MicropyGPS(object):
 
 if __name__ == "__main__":
 
+    sentence_count = 0
+
     test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62',
                 '$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A',
                 '$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68',
@@ -468,6 +480,7 @@ if __name__ == "__main__":
     my_gps = MicropyGPS()
     sentence = ''
     for RMC_sentence in test_RMC:
+        sentence_count += 1
         for y in RMC_sentence:
             sentence = my_gps.update(y)
         print('Parsed a', sentence, 'Sentence')
@@ -483,6 +496,7 @@ if __name__ == "__main__":
         print('')
 
     for VTG_sentence in test_VTG:
+        sentence_count += 1
         for y in VTG_sentence:
             sentence = my_gps.update(y)
         print('Parsed a', sentence, 'Sentence')
@@ -493,6 +507,7 @@ if __name__ == "__main__":
         print('')
 
     for GGA_sentence in test_GGA:
+        sentence_count += 1
         for y in GGA_sentence:
             sentence = my_gps.update(y)
         print('Parsed a', sentence, 'Sentence')
@@ -509,6 +524,7 @@ if __name__ == "__main__":
         print('')
 
     for GSA_sentence in test_GSA:
+        sentence_count += 1
         for y in GSA_sentence:
             sentence = my_gps.update(y)
         print('Parsed a', sentence, 'Sentence')
@@ -522,6 +538,7 @@ if __name__ == "__main__":
         print('')
 
     for GSV_sentence in test_GSV:
+        sentence_count += 1
         for y in GSV_sentence:
             sentence = my_gps.update(y)
         print('Parsed a', sentence, 'Sentence')
@@ -536,3 +553,9 @@ if __name__ == "__main__":
             print('Satellite Data:', my_gps.satellite_data)
             print('Satellites Visible:', my_gps.satellites_visible())
         print('')
+
+    print('### Final Results ###')
+    print('Sentences Attempted:', sentence_count)
+    print('Sentences Found:', my_gps.clean_sentences)
+    print('Sentences Parsed:', my_gps.parsed_sentences)
+    print('CRC_Fails:', my_gps.crc_fails)
