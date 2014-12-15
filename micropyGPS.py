@@ -25,7 +25,7 @@
 # Distance/Time to Target
 # Logging
 # More Helper Functions
-# Dynamiclly limit sentences types to parse
+# Dynamically limit sentences types to parse
 
 
 class MicropyGPS(object):
@@ -298,9 +298,9 @@ class MicropyGPS(object):
         """Parse Satellites in View (GSV) sentence. Updates number of SV Sentences,the number of the last SV sentence
         parsed"""
         try:
-            number_of_sv_sentences = int(self.gps_segments[1])
+            num_sv_sentences = int(self.gps_segments[1])
             current_sv_sentence = int(self.gps_segments[2])
-            satellites_in_view = int(self.gps_segments[3])
+            sats_in_view = int(self.gps_segments[3])
         except ValueError:
             return False
 
@@ -308,17 +308,31 @@ class MicropyGPS(object):
         # satellite PRN is key, tuple containing telemetry is value
         satellite_dict = dict()
 
+        # Calculate  Number of Satelites to pull data for and thus how many segment positions to read
+        if num_sv_sentences == current_sv_sentence:
+            sat_segment_limit = ((sats_in_view % 4) * 4) + 4  # Last sentence may have 1-4 satellites
+        else:
+            sat_segment_limit = 20  # Non-last sentences have 4 satellites and thus read up to position 20
+
         # Try to recover data for up to 4 satellites in sentence
-        for sats in range(4, 20, 4):
+        for sats in range(4, sat_segment_limit, 4):
 
             # If a PRN is present, grab satellite data
             if self.gps_segments[sats]:
                 try:
                     sat_id = int(self.gps_segments[sats])
-                    elevation = int(self.gps_segments[sats+1])
-                    azimuth = int(self.gps_segments[sats+2])
                 except ValueError:
                     return False
+
+                try:  # elevation can be null (no value) when not tracking
+                    elevation = int(self.gps_segments[sats+1])
+                except ValueError:
+                    elevation = None
+
+                try:  # azimuth can be null (no value) when not tracking
+                    azimuth = int(self.gps_segments[sats+2])
+                except ValueError:
+                    azimuth = None
 
                 try:  # SNR can be null (no value) when not tracking
                     snr = int(self.gps_segments[sats+3])
@@ -333,9 +347,9 @@ class MicropyGPS(object):
             satellite_dict[sat_id] = (elevation, azimuth, snr)
 
         # Update Object Data
-        self.total_sv_sentences = number_of_sv_sentences
+        self.total_sv_sentences = num_sv_sentences
         self.last_sv_sentence = current_sv_sentence
-        self.satellites_in_view = satellites_in_view
+        self.satellites_in_view = sats_in_view
 
         # For a new set of sentences, we either clear out the existing sat data or
         # update it as additional SV sentences are parsed
@@ -475,7 +489,11 @@ if __name__ == "__main__":
                 '$GPGSV,3,3,12,04,12,204,34,27,11,324,35,32,11,089,,26,10,264,40*7B',
                 '$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74',
                 '$GPGSV,3,2,11,14,25,170,00,16,57,208,39,18,67,296,40,19,40,246,00*74',
-                '$GPGSV,3,3,11,22,42,067,42,24,14,311,43,27,05,244,00,,,,*4D']
+                '$GPGSV,3,3,11,22,42,067,42,24,14,311,43,27,05,244,00,,,,*4D',
+                '$GPGSV,4,1,14,22,81,349,25,14,64,296,22,18,54,114,21,51,40,212,*7D',
+                '$GPGSV,4,2,14,24,30,047,22,04,22,312,26,31,22,204,,12,19,088,23*72',
+                '$GPGSV,4,3,14,25,17,127,18,21,16,175,,11,09,315,16,19,05,273,*72',
+                '$GPGSV,4,4,14,32,05,303,,15,02,073,*7A']
 
     my_gps = MicropyGPS()
     sentence = ''
