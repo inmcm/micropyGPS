@@ -16,7 +16,7 @@ Features:
  - Modeled after the great [TinyGPS] Arduino library
    
    
-### Usage
+### Basic Usage
 
 micropyGPS is easy to use; copy micropyGPS.py into your project directory and import the MicropyGPS class. From
 there, just create a new GPS object and start feeding it data. After you've feed it an entire valid sentence, it will return the sentence type and the internal values will be update. The example below shows the parsing of an RMC sentence and the object return a tuple with the current latitude data
@@ -37,6 +37,20 @@ The object will continue to accept new characters and parse sentences for as lon
 ```sh
 $ python micropyGPS.py
 ```
+### Pyboard Usage
+
+Test scripts are included to help get started with using micropyGPS on the [pyboard] platform. These scripts can be copied over to the pyboards internal memory or placed on the SD Card. Make sure to rename whichever script you're using to **main.py** when running them on the pyboard.
+
+ - **uart_test.py** is a simple UART echo program to test if both your GPS is hooked up and UART is configured correctly. Some of the standard NMEA setences should print out once a second (or faster depending on your GPS update rate) if everything is OK
+ - **sentence_test.py** will try and parse all incoming characters from the UART. This script requires micropyGPS.py be present in the same area of storage (SD Card or internal). Whenever a set of characters comprising a valid sentence is received and parsed, the script will print the type of sentence.
+
+An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] is shown below:
+
+![hookup](http://i.imgur.com/yd4Mjka.jpg?1) 
+
+
 [Micropython]:https://micropython.org/
 [NMEA-0183]:http://aprs.gids.nl/nmea/
 [TinyGPS]:http://arduiniana.org/libraries/tinygps/ 
+[pyboard]:http://docs.micropython.org/en/latest/quickref.html
+[Ultimate GPS Breakout]:http://www.adafruit.com/product/746
