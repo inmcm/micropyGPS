@@ -1,29 +1,13 @@
 from pyb import UART
-from micropyGPS import MicropyGPS
 
+# Setup the connection to your GPS here
+# This example uses UART 3 with RX on pin Y10
+# Baudrate is 9600bps, with the standard 8 bits, 1 stop bit, no parity
 uart = UART(3, 9600)
 
 # Basic UART --> terminal printer, use to test your GPS module
-# while True:
-#     if uart.any():
-#         print(chr(uart.readchar()), end='')
-
-
-my_gps = MicropyGPS()
-
-sentence_count = 0
 while True:
     if uart.any():
-        stat = my_gps.update(chr(uart.readchar()))
-        if stat:
-            print(stat)
-            stat = None
-            sentence_count += 1
-    if sentence_count == 300:
-        break;    
+        print(chr(uart.readchar()), end='')
 
-
-print('Sentences Found:', my_gps.clean_sentences)
-print('Sentences Parsed:', my_gps.parsed_sentences)
-print('CRC_Fails:', my_gps.crc_fails)
 
