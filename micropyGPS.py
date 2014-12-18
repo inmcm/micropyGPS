@@ -35,6 +35,9 @@ class MicropyGPS(object):
     # Max Number of Characters a valid sentence can be (based on GGA sentence)
     SENTENCE_LIMIT = 76
     __HEMISPHERES = ('N', 'S', 'E', 'W')
+    __NO_FIX = 1
+    __FIX_2D = 2
+    __FIX_3D = 3
 
     def __init__(self, local_offset=0):
         """Setup GPS Object Status Flags, Internal Data Registers, etc"""
@@ -47,6 +50,7 @@ class MicropyGPS(object):
         self.gps_segments = []
         self.crc_xor = 0
         self.char_count = 0
+        self.fix_time = 0
 
         #####################
         # Sentence Statistics
@@ -251,6 +255,10 @@ class MicropyGPS(object):
         self.hdop = hdop
         self.fix_stat = fix_stat
 
+        # If Fix is GOOD, update fix timestamp
+        if fix_stat:
+            self.new_fix_time()
+
         return True
 
     def gpgsa(self):
@@ -287,6 +295,11 @@ class MicropyGPS(object):
 
         # Update Object Data
         self.fix_type = fix_type
+
+        # If Fix is GOOD, update fix timestamp
+        if fix_type > self.__NO_FIX:
+            self.new_fix_time()
+
         self.satellites_used = sats_used
         self.hdop = hdop
         self.vdop = vdop
@@ -296,7 +309,7 @@ class MicropyGPS(object):
 
     def gpgsv(self):
         """Parse Satellites in View (GSV) sentence. Updates number of SV Sentences,the number of the last SV sentence
-        parsed"""
+        parsed, and data on each satellite present in the sentence"""
         try:
             num_sv_sentences = int(self.gps_segments[1])
             current_sv_sentence = int(self.gps_segments[2])
@@ -444,6 +457,15 @@ class MicropyGPS(object):
         # Tell Host no new sentence was parsed
         return None
 
+    def new_fix_time(self):
+        """Updates a high resolution counter with current time when fix is updated"""
+        try:
+            import pyb
+            self.fix_time = pyb.millis()
+        except ImportError:
+            import time
+            self.fix_time = time.monotonic() * 1000
+
     #########################################
     # User Helper Functions
     # These functions make working with the GPS object data easier
@@ -465,6 +487,17 @@ class MicropyGPS(object):
         :return: list
         """
         return list(self.satellite_data.keys())
+
+    def time_since_fix(self):
+        """Returns number of millisecond since the last sentence with a valid fix was parsed"""
+        try:
+            import pyb
+            current = pyb.elapsed_millis(self.fix_time)
+        except ImportError:
+            import time
+            current = (time.monotonic() * 1000) - self.fix_time
+
+        return current
 
     # All the currently supported NMEA sentences    
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
