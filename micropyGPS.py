@@ -28,6 +28,17 @@
 # Dynamically limit sentences types to parse
 
 
+# Import pyb or time for fix time handling
+try:
+    # Assume running on pyboard
+    import pyb
+except ImportError:
+    # Otherwise default to time module for non-embedded implementations
+    # Note that this forces the resolution of the fix time 1 second instead
+    # of milliseconds as on the pyboard
+    import time
+
+
 class MicropyGPS(object):
     """GPS NMEA Sentence Parser. Creates object that stores all relevant GPS data and statistics.
     Parses sentences one character at a time using update(). """
@@ -94,17 +105,37 @@ class MicropyGPS(object):
         # UTC Timestamp
         try:
             utc_string = self.gps_segments[1]
-            # Skip timestamp if receiver doesn't have one yet
-            if utc_string:
+
+            if utc_string:  # Possible timestamp found
                 hours = int(utc_string[0:2]) + self.local_offset
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
                 self.timestamp = (hours, minutes, seconds)
-        except ValueError:
+            else:  # No Time stamp yet
+                self.timestamp = (0, 0, 0)
+
+        except ValueError:  # Bad Timestamp value present
+            return False
+
+        # Date stamp
+        try:
+            date_string = self.gps_segments[9]
+            # NOTE!!! Date string is assumed to be year >=2000,
+            # Sentences recorded in 90s will display as 209X!!!
+            # FIXME if you want to parse old GPS logs or are time traveler
+            if date_string:  # Possible date stamp found
+                day = date_string[0:2]
+                month = date_string[2:4]
+                year = date_string[4:6]
+                self.date = (day, month, year)
+            else:  # No Date stamp yet
+                self.date = (0, 0, 0)
+
+        except ValueError:  # Bad Date stamp value present
             return False
 
         # Check Receiver Data Valid Flag
-        if self.gps_segments[2] == 'A':  # Data from Receiver is valid
+        if self.gps_segments[2] == 'A':  # Data from Receiver is Valid/Has Fix
 
             # Longitude / Latitude
             try:
@@ -134,18 +165,6 @@ class MicropyGPS(object):
             except ValueError:
                 return False
 
-            # Date
-            try:
-                # NOTE!!! Date string is assumed to be year >=2000,
-                # Sentences recorded in 90s will display as 209X!!!
-                # FIXME if you want to parse old GPS logs or are time traveler
-                date_string = self.gps_segments[9]
-                day = date_string[0:2]
-                month = date_string[2:4]
-                year = date_string[4:6]
-            except ValueError:
-                return False
-
             # Course
             try:
                 course = self.gps_segments[8]
@@ -159,12 +178,19 @@ class MicropyGPS(object):
             self.longitude = (lon_degs, lon_mins, lon_hemi)
             # Include mph and hm/h
             self.speed = (spd_knt, spd_knt * 1.151, spd_knt * 1.852)
-            self.date = (day, month, year)
             self.course = course
             self.valid = True
 
-        else:
-            return False
+            # Update Last Fix Time
+            self.new_fix_time()
+
+        else:  # Clear Position Data if Sentence is 'Invalid'
+            self.latitude = (0, 0.0, 'N')
+            self.longitude = (0, 0.0, 'W')
+            self.speed = (0.0, 0.0, 0.0)
+            self.course = 0.0
+            self.date = (0, 0, 0)
+            self.valid = False
 
         return True
 
@@ -458,13 +484,12 @@ class MicropyGPS(object):
         return None
 
     def new_fix_time(self):
-        """Updates a high resolution counter with current time when fix is updated"""
+        """Updates a high resolution counter with current time when fix is updated. Currently only triggered from
+        GGA, GSA and RMC sentences"""
         try:
-            import pyb
             self.fix_time = pyb.millis()
-        except ImportError:
-            import time
-            self.fix_time = time.monotonic() * 1000
+        except NameError:
+            self.fix_time = time.time()
 
     #########################################
     # User Helper Functions
@@ -491,11 +516,9 @@ class MicropyGPS(object):
     def time_since_fix(self):
         """Returns number of millisecond since the last sentence with a valid fix was parsed"""
         try:
-            import pyb
             current = pyb.elapsed_millis(self.fix_time)
-        except ImportError:
-            import time
-            current = (time.monotonic() * 1000) - self.fix_time
+        except NameError:
+            current = time.time() - self.fix_time
 
         return current
 
