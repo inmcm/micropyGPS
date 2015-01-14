@@ -21,12 +21,12 @@
 
 # TODO:
 # Time Since First Fix
-# Time Since Last Good Fix
 # Distance/Time to Target
 # Logging
 # More Helper Functions
 # Dynamically limit sentences types to parse
 
+import math
 
 # Import pyb or time for fix time handling
 try:
@@ -49,6 +49,7 @@ class MicropyGPS(object):
     __NO_FIX = 1
     __FIX_2D = 2
     __FIX_3D = 3
+    __DIRECTIONS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
     def __init__(self, local_offset=0):
         """Setup GPS Object Status Flags, Internal Data Registers, etc"""
@@ -167,7 +168,7 @@ class MicropyGPS(object):
 
             # Course
             try:
-                course = self.gps_segments[8]
+                course = float(self.gps_segments[8])
             except ValueError:
                 return False
 
@@ -197,7 +198,7 @@ class MicropyGPS(object):
     def gpvtg(self):
         """Parse Track Made Good and Ground Speed (VTG) Sentence. Updates speed and course"""
         try:
-            course = self.gps_segments[1]
+            course = float(self.gps_segments[1])
             spd_knt = float(self.gps_segments[5])
         except ValueError:
             return False
@@ -514,13 +515,37 @@ class MicropyGPS(object):
         return list(self.satellite_data.keys())
 
     def time_since_fix(self):
-        """Returns number of millisecond since the last sentence with a valid fix was parsed"""
+        """Returns number of millisecond since the last sentence with a valid fix was parsed. Returns 0 if
+        no fix has been found"""
+
+        # Test if a Fix has been found
+        if self.fix_time == 0:
+            return -1
+
+        # Try calculating fix time assuming using millis on a pyboard; default to seconds if not
         try:
             current = pyb.elapsed_millis(self.fix_time)
         except NameError:
             current = time.time() - self.fix_time
 
         return current
+
+    def compass_direction(self):
+        """
+        Determine a cardinal or inter-cardinal direction based on current course.
+        :return: string
+        """
+        # Calculate the offset for a rotated compass
+        if self.course >= 348.75:
+            offset_course = 360 - self.course
+        else:
+            offset_course = self.course + 11.25
+
+        dir_index = math.floor(offset_course / 22.5)
+
+        final_dir = self.__DIRECTIONS[dir_index]
+
+        return final_dir
 
     # All the currently supported NMEA sentences    
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
@@ -567,6 +592,7 @@ if __name__ == "__main__":
         print('Date Stamp:', my_gps.date)
         print('Course', my_gps.course)
         print('Data is Valid', my_gps.valid)
+        print('Compass Direction:',my_gps.compass_direction())
         print('')
 
     for VTG_sentence in test_VTG:
@@ -578,6 +604,7 @@ if __name__ == "__main__":
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
         print('Speed:', my_gps.speed)
         print('Course', my_gps.course)
+        print('Compass Direction:',my_gps.compass_direction())
         print('')
 
     for GGA_sentence in test_GGA:
