@@ -203,7 +203,7 @@ class MicropyGPS(object):
         except ValueError:
             return False
 
-        # Include mph and hm/h
+        # Include mph and km/h
         self.speed = (spd_knt, spd_knt * 1.151, spd_knt * 1.852)
         self.course = course
         return True
@@ -541,11 +541,49 @@ class MicropyGPS(object):
         else:
             offset_course = self.course + 11.25
 
+        # Each compass point is separated by 22.5 degrees, divide to find lookup value
         dir_index = math.floor(offset_course / 22.5)
 
         final_dir = self.__DIRECTIONS[dir_index]
 
         return final_dir
+
+    def latitude_string(self):
+        """
+        Create a readable string of the current latitude data
+        :return: string
+        """
+        lat_string = str(self.latitude[0]) + '° ' + str(self.latitude[1]) + "' " + str(self.latitude[2])
+        return lat_string
+
+    def longitude_string(self):
+        """
+        Create a readable string of the current longitude data
+        :return: string
+        """
+        lat_string = str(self.longitude[0]) + '° ' + str(self.longitude[1]) + "' " + str(self.longitude[2])
+        return lat_string
+
+    def speed_string(self, unit='kph'):
+        """
+        Creates a readable string of the current speed data in one of three units
+        :param unit: string of 'kph','mph, or 'knot'
+        :return:
+        """
+        if unit == 'mph':
+            speed_string = str(self.speed[1]) + ' mph'
+
+        elif unit == 'knot':
+            if self.speed[0] == 1:
+                unit_str = ' knot'
+            else:
+                unit_str = ' knots'
+            speed_string = str(self.speed[0]) + unit_str
+
+        else:
+            speed_string = str(self.speed[1]) + ' km/h'
+
+        return speed_string
 
     # All the currently supported NMEA sentences    
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
@@ -592,7 +630,7 @@ if __name__ == "__main__":
         print('Date Stamp:', my_gps.date)
         print('Course', my_gps.course)
         print('Data is Valid', my_gps.valid)
-        print('Compass Direction:',my_gps.compass_direction())
+        print('Compass Direction:', my_gps.compass_direction())
         print('')
 
     for VTG_sentence in test_VTG:
@@ -604,7 +642,7 @@ if __name__ == "__main__":
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
         print('Speed:', my_gps.speed)
         print('Course', my_gps.course)
-        print('Compass Direction:',my_gps.compass_direction())
+        print('Compass Direction:', my_gps.compass_direction())
         print('')
 
     for GGA_sentence in test_GGA:
@@ -654,6 +692,12 @@ if __name__ == "__main__":
             print('Satellite Data:', my_gps.satellite_data)
             print('Satellites Visible:', my_gps.satellites_visible())
         print('')
+
+    print("Pretty Print Examples:")
+    print('Latitude:', my_gps.latitude_string())
+    print('Longitude:', my_gps.longitude_string())
+    print('Speed:', my_gps.speed_string('kph'), 'or', my_gps.speed_string('mph'), 'or', my_gps.speed_string('knot'))
+    print()
 
     print('### Final Results ###')
     print('Sentences Attempted:', sentence_count)
