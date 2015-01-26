@@ -50,6 +50,9 @@ class MicropyGPS(object):
     __FIX_2D = 2
     __FIX_3D = 3
     __DIRECTIONS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+    __MONTHS = ('January', 'February', 'March', 'April', 'May',
+                'June', 'July', 'August', 'September', 'October',
+                'November', 'December')
 
     def __init__(self, local_offset=0):
         """Setup GPS Object Status Flags, Internal Data Registers, etc"""
@@ -121,13 +124,13 @@ class MicropyGPS(object):
         # Date stamp
         try:
             date_string = self.gps_segments[9]
-            # NOTE!!! Date string is assumed to be year >=2000,
-            # Sentences recorded in 90s will display as 209X!!!
-            # FIXME if you want to parse old GPS logs or are time traveler
+
+            # Date string printer function assumes to be year >=2000,
+            # date_string() must be supplied with the correct century argument to display correctly
             if date_string:  # Possible date stamp found
-                day = date_string[0:2]
-                month = date_string[2:4]
-                year = date_string[4:6]
+                day = int(date_string[0:2])
+                month = int(date_string[2:4])
+                year = int(date_string[4:6])
                 self.date = (day, month, year)
             else:  # No Date stamp yet
                 self.date = (0, 0, 0)
@@ -585,6 +588,67 @@ class MicropyGPS(object):
 
         return speed_string
 
+    def date_string(self, formatting='s_mdy', century='20'):
+        """
+        Creates a readable string of the current date.
+        Can select between long format: Januray 1st, 2014
+        or two short formats:
+        11/01/2014 (MM/DD/YYYY)
+        01/11/2014 (DD/MM/YYYY)
+        :param formatting: string 's_mdy', 's_dmy', or 'long'
+        :param century: int delineating the century the GPS data is from (19 for 19XX, 20 for 20XX)
+        :return: date_string  string with long or short format date
+        """
+
+        # Long Format Januray 1st, 2014
+        if formatting == 'long':
+            # Retrieve Month string from private set
+            month = self.__MONTHS[self.date[1] - 1]
+
+            # Determine Date Suffix
+            if self.date[0] in (1, 21, 31):
+                suffix = 'st'
+            elif self.date[0] in (2, 22):
+                suffix = 'nd'
+            elif self.date[0] == 3:
+                suffix = 'rd'
+            else:
+                suffix = 'th'
+
+            day = str(self.date[0]) + suffix  # Create Day String
+
+            year = century + str(self.date[2])  # Create Year String
+
+            date_string = month + ' ' + day + ', ' + year  # Put it all together
+
+        else:
+            # Add leading zeros to day string if necessary
+            if self.date[0] < 10:
+                day = '0' + str(self.date[0])
+            else:
+                day = str(self.date[0])
+
+            # Add leading zeros to month string if necessary
+            if self.date[1] < 10:
+                month = '0' + str(self.date[1])
+            else:
+                month = str(self.date[1])
+
+            # Add leading zeros to year string if necessary
+            if self.date[2] < 10:
+                year = '0' + str(self.date[2])
+            else:
+                year = str(self.date[2])
+
+            # Build final string based on desired formatting
+            if formatting == 's_dmy':
+                date_string = day + '/' + month + '/' + year
+
+            else:  # Default date format
+                date_string = month + '/' + day + '/' + year
+
+        return date_string
+
     # All the currently supported NMEA sentences    
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
 
@@ -697,6 +761,9 @@ if __name__ == "__main__":
     print('Latitude:', my_gps.latitude_string())
     print('Longitude:', my_gps.longitude_string())
     print('Speed:', my_gps.speed_string('kph'), 'or', my_gps.speed_string('mph'), 'or', my_gps.speed_string('knot'))
+    print('Date (Long Format):', my_gps.date_string('long'))
+    print('Date (Short D/M/Y Format):', my_gps.date_string('s_dmy'))
+    print('Date (Short M/D/Y Format):', my_gps.date_string('s_mdy'))
     print()
 
     print('### Final Results ###')
