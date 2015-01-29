@@ -584,7 +584,7 @@ class MicropyGPS(object):
             speed_string = str(self.speed[0]) + unit_str
 
         else:
-            speed_string = str(self.speed[1]) + ' km/h'
+            speed_string = str(self.speed[2]) + ' km/h'
 
         return speed_string
 
@@ -649,7 +649,7 @@ class MicropyGPS(object):
 
         return date_string
 
-    # All the currently supported NMEA sentences    
+    # All the currently supported NMEA sentences
     supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
 
 if __name__ == "__main__":
