@@ -171,8 +171,9 @@ Test scripts are included to help get started with using micropyGPS on the [pybo
 
  - **uart_test.py** is a simple UART echo program to test if both your GPS is hooked up and UART is configured correctly. Some of the standard NMEA sentences should print out once a second (or faster depending on your GPS update rate) if everything is OK
  - **sentence_test.py** will try and parse all incoming characters from the UART. This script requires micropyGPS.py be present in the same area of storage (SD Card or internal). Whenever a set of characters comprising a valid sentence is received and parsed, the script will print the type of sentence.
+ - **GPIO_interrupt_updater.py** is an example of how to use external interrupt to trigger an update of GPS data. In this case, a periodic signal (1Hz GPS output) is attached to pin X8 causing a mass parsing event every second.
 
-An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] is shown below:
+An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] (minus the PPS signal needed in the external interrupt example) is shown below. 
 
 ![hookup](http://i.imgur.com/yd4Mjka.jpg?1) 
 
