@@ -173,6 +173,8 @@ Test scripts are included to help get started with using micropyGPS on the [pybo
  - **sentence_test.py** will try and parse all incoming characters from the UART. This script requires micropyGPS.py be present in the same area of storage (SD Card or internal). Whenever a set of characters comprising a valid sentence is received and parsed, the script will print the type of sentence.
  - **GPIO_interrupt_updater.py** is an example of how to use external interrupt to trigger an update of GPS data. In this case, a periodic signal (1Hz GPS output) is attached to pin X8 causing a mass parsing event every second.
 
+Adjusting the baud rate and update rate of the receiver can be easily accomplished with my companion [MTK_command] script
+
 An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] (minus the PPS signal needed in the external interrupt example) is shown below. 
 
 ![hookup](http://i.imgur.com/yd4Mjka.jpg?1) 
@@ -186,4 +188,5 @@ Beyond the pyBoard, micropyGPS should run on other embedded platforms that have 
 [NMEA-0183]:http://aprs.gids.nl/nmea/
 [TinyGPS]:http://arduiniana.org/libraries/tinygps/ 
 [pyboard]:http://docs.micropython.org/en/latest/quickref.html
+[MTK_command]:https://github.com/inmcm/MTK_commands
 [Ultimate GPS Breakout]:http://www.adafruit.com/product/746
