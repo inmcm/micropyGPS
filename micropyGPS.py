@@ -104,7 +104,7 @@ class MicropyGPS(object):
 
     def gprmc(self):
         """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence. Updates UTC timestamp, latitude,
-        longitude, Course, Speed, and Date"""
+        longitude, Course, Speed, Date, and fix status"""
 
         # UTC Timestamp
         try:
@@ -198,6 +198,65 @@ class MicropyGPS(object):
 
         return True
 
+    def gpgll(self):
+        """Parse Geographic Latitude and Longitude (GLL)Sentence. Updates UTC timestamp, latitude,
+        longitude, and fix status"""
+
+        # UTC Timestamp
+        try:
+            utc_string = self.gps_segments[5]
+
+            if utc_string:  # Possible timestamp found
+                hours = int(utc_string[0:2]) + self.local_offset
+                minutes = int(utc_string[2:4])
+                seconds = float(utc_string[4:])
+                self.timestamp = (hours, minutes, seconds)
+            else:  # No Time stamp yet
+                self.timestamp = (0, 0, 0)
+
+        except ValueError:  # Bad Timestamp value present
+            return False
+
+        # Check Receiver Data Valid Flag
+        if self.gps_segments[6] == 'A':  # Data from Receiver is Valid/Has Fix
+
+            # Longitude / Latitude
+            try:
+                # Latitude
+                l_string = self.gps_segments[1]
+                lat_degs = int(l_string[0:2])
+                lat_mins = float(l_string[2:])
+                lat_hemi = self.gps_segments[2]
+
+                # Longitude
+                l_string = self.gps_segments[3]
+                lon_degs = int(l_string[0:3])
+                lon_mins = float(l_string[3:])
+                lon_hemi = self.gps_segments[4]
+            except ValueError:
+                return False
+
+            if lat_hemi not in self.__HEMISPHERES:
+                return False
+
+            if lon_hemi not in self.__HEMISPHERES:
+                return False
+
+            # Update Object Data
+            self.latitude = (lat_degs, lat_mins, lat_hemi)
+            self.longitude = (lon_degs, lon_mins, lon_hemi)
+            self.valid = True
+
+            # Update Last Fix Time
+            self.new_fix_time()
+
+        else:  # Clear Position Data if Sentence is 'Invalid'
+            self.latitude = (0, 0.0, 'N')
+            self.longitude = (0, 0.0, 'W')
+            self.valid = False
+
+        return True
+
     def gpvtg(self):
         """Parse Track Made Good and Ground Speed (VTG) Sentence. Updates speed and course"""
         try:
@@ -213,7 +272,7 @@ class MicropyGPS(object):
 
     def gpgga(self):
         """Parse Global Positioning System Fix Data (GGA) Sentence. Updates UTC timestamp, latitude, longitude,
-        fix status, satellites in use, Horizontal Dilution of Precision (HDOP), altitude, and geoid height"""
+        fix status, satellites in use, Horizontal Dilution of Precision (HDOP), altitude, geoid height and fix status"""
 
         try:
             # UTC Timestamp
@@ -293,8 +352,8 @@ class MicropyGPS(object):
 
     def gpgsa(self):
         """Parse GNSS DOP and Active Satellites (GSA) sentence. Updates GPS fix type, list of satellites used in
-        fix calculation, Position Dilution of Precision (PDOP), Horizontal Dilution of Precision (HDOP), and Vertical
-        Dilution of Precision"""
+        fix calculation, Position Dilution of Precision (PDOP), Horizontal Dilution of Precision (HDOP), Vertical
+        Dilution of Precision, and fix status"""
 
         # Fix Type (None,2D or 3D)
         try:
@@ -650,7 +709,8 @@ class MicropyGPS(object):
         return date_string
 
     # All the currently supported NMEA sentences
-    supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv}
+    supported_sentences = {'GPRMC': gprmc, 'GPGGA': gpgga, 'GPVTG': gpvtg, 'GPGSA': gpgsa, 'GPGSV': gpgsv,
+                           'GPGLL': gpgll}
 
 if __name__ == "__main__":
 
@@ -677,6 +737,10 @@ if __name__ == "__main__":
                 '$GPGSV,4,2,14,24,30,047,22,04,22,312,26,31,22,204,,12,19,088,23*72',
                 '$GPGSV,4,3,14,25,17,127,18,21,16,175,,11,09,315,16,19,05,273,*72',
                 '$GPGSV,4,4,14,32,05,303,,15,02,073,*7A']
+    test_GLL = ['$GPGLL,3711.0942,N,08671.4472,W,000812.000,A,A*46',
+                '$GPGLL,4916.45,N,12311.12,W,225444,A,*1D',
+                '$GPGLL,4250.5589,S,14718.5084,E,092204.999,A*2D',
+                '$GPGLL,0000.0000,N,00000.0000,E,235947.000,V*2D']
 
     my_gps = MicropyGPS()
     sentence = ''
@@ -693,8 +757,21 @@ if __name__ == "__main__":
         print('Speed:', my_gps.speed)
         print('Date Stamp:', my_gps.date)
         print('Course', my_gps.course)
-        print('Data is Valid', my_gps.valid)
+        print('Data is Valid:', my_gps.valid)
         print('Compass Direction:', my_gps.compass_direction())
+        print('')
+
+    for GLL_sentence in test_GLL:
+        sentence_count += 1
+        for y in GLL_sentence:
+            sentence = my_gps.update(y)
+        print('Parsed a', sentence, 'Sentence')
+        print('Parsed Strings', my_gps.gps_segments)
+        print('Sentence CRC Value:', hex(my_gps.crc_xor))
+        print('Longitude:', my_gps.longitude)
+        print('Latitude', my_gps.latitude)
+        print('UTC Timestamp:', my_gps.timestamp)
+        print('Data is Valid:', my_gps.valid)
         print('')
 
     for VTG_sentence in test_VTG:
