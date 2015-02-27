@@ -41,6 +41,7 @@ $ python micropyGPS.py
 ### Currently Supported Sentences 
 
 * GPRMC
+* GPGLL
 * GPGGA
 * GPVTG
 * GPGSA
