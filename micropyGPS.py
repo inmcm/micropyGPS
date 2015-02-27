@@ -26,7 +26,7 @@
 # More Helper Functions
 # Dynamically limit sentences types to parse
 
-import math
+from math import floor
 
 # Import pyb or time for fix time handling
 try:
@@ -545,7 +545,7 @@ class MicropyGPS(object):
             offset_course = self.course + 11.25
 
         # Each compass point is separated by 22.5 degrees, divide to find lookup value
-        dir_index = math.floor(offset_course / 22.5)
+        dir_index = floor(offset_course / 22.5)
 
         final_dir = self.__DIRECTIONS[dir_index]
 
