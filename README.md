@@ -8,7 +8,7 @@ platform. It's also fully compatible with Python 3.x
 Features:
 
  - Parses and verifies most of the important [NMEA-0183] output messages into easily handled data structures
- - Provides helper methods to interpret, present, and manipulate the GPS data
+ - Provides helper methods to interpret, present, log, and manipulate the GPS data
  - Written in pure Python 3.x using only the standard libraries available in Micropython
  - Implemented as a single class within a single file for easy integration into an embedded project
  - Parser written with a serial UART data source in mind; works on a single character at a time with
@@ -19,7 +19,7 @@ Features:
 ## Basic Usage
 
 micropyGPS is easy to use: copy micropyGPS.py into your project directory and import the MicropyGPS class into your script. From
-there, just create a new GPS object and start feeding it data using the ```update()``` method. After you've feed it an entire valid sentence, it will return the sentence type and the internal values will be update. The example below shows the parsing of an RMC sentence and the object return a tuple with the current latitude data
+there, just create a new GPS object and start feeding it data using the ```update()``` method. After you've feed it an entire valid sentence, it will return the sentence type and the internal values will be updated. The example below shows the parsing of an RMC sentence and the object return a tuple with the current latitude data
 
 ```sh
 >>> from micropyGPS import MicropyGPS
@@ -51,15 +51,19 @@ $ python micropyGPS.py
 ### Position Data
 Data successfully parsed from valid sentences is stored in easily accessible object variables. Data with multiple components (like latitude and longitude) is stored in tuples.
 ```sh
-# Latitude is 37° 51.65' S
+## Latitude is 37° 51.65' S
 >>> my_gps.latitude
 (37, 51.65, 'S')
+# Longitude is 145° 7.36' E
 >>> my_gps.longitude
 (145, 7.36, 'E')
+# Course is 54.7°
 >>> my_gps.course
 54.7
+# Altitude is 280.2 meters
 >>> my_gps.altitude
 280.2
+# Distance from ideal geoid is -34 meters
 >>> my_gps.geoid_height
 -34.0
 ```
@@ -138,6 +142,20 @@ The amount of real time passed since the last sentence with valid fix data was p
 # Assume running on pyBoard
 >>> my_gps.time_since_fix()
 3456
+```
+
+### Logging
+micropyGPS currently can do very basic automatic logging of raw NMEA sentence data to a file. Any valid ASCII character passed into the parser, while the logging is enabled, is logged to a target file.  This is useful if processing GPS sentences, but want to save the collected data for archive or further analysis. Due to the relative size of the log files, it's highly recommended to use an SD card as your storage medium as opposed to the emulated memory on the STM32 micro. All logging methods return a boolean if the operation succeeded or not.
+```sh
+# Logging can be started at any time with the start_logging()
+>>> my_gps.start_logging('log.txt')
+True
+# Arbitrary strings can be written into the log file with write_log() method
+>>> my_gps.write_log('Some note for the log file')
+True
+# Stop logging and close the log file with stop_logging()
+>>> my_gps.stop_logging()
+True
 ```
 
 ### Prettier Printing

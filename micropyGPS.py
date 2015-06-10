@@ -74,6 +74,11 @@ class MicropyGPS(object):
         self.parsed_sentences = 0
 
         #####################
+        # Logging Related
+        self.log_handle = None
+        self.log_en = False
+
+        #####################
         # Data From Sentences
         # Time
         self.timestamp = (0, 0, 0)
@@ -102,6 +107,51 @@ class MicropyGPS(object):
         self.fix_stat = 0
         self.fix_type = 1
 
+    ########################################
+    # Logging Related Functions
+    ########################################
+    def start_logging(self, target_file, mode="append"):
+        """
+        Create GPS data log object
+        """
+        if mode == 'new':
+            mode_code = 'w'
+        else:
+            mode_code = 'a'
+        try:
+            self.log_handle = open(target_file, mode_code)
+        except AttributeError:
+            print("Invalid FileName")
+            return False
+
+        self.log_en = True
+        return True
+
+    def stop_logging(self):
+        """
+        Closes the log file handler and disables further logging
+        """
+        try:
+            self.log_handle.close()
+        except AttributeError:
+            print("Invalid Handle")
+            return False
+
+        self.log_en = False
+        return True
+
+    def write_log(self, log_string):
+        """Attempts to write the last valid NMEA sentence character to the active file handler
+        """
+        try:
+            self.log_handle.write(log_string)
+        except TypeError:
+            return False
+        return True
+
+    ########################################
+    # Sentence Parsers
+    ########################################
     def gprmc(self):
         """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence. Updates UTC timestamp, latitude,
         longitude, Course, Speed, Date, and fix status"""
@@ -462,6 +512,10 @@ class MicropyGPS(object):
 
         return True
 
+    ##########################################
+    # Data Stream Handler Functions
+    ##########################################
+
     def new_sentence(self):
         """Adjust Object Flags in Preparation for a New Sentence"""
         self.gps_segments = ['']
@@ -481,8 +535,12 @@ class MicropyGPS(object):
         # Validate new_char is a printable char
         ascii_char = ord(new_char)
 
-        if 33 <= ascii_char <= 126:
+        if 10 <= ascii_char <= 126:
             self.char_count += 1
+
+            # Write Character to log file if enabled
+            if self.log_en:
+                self.write_log(new_char)
 
             # Check if a new string is starting ($)
             if new_char == '$':
@@ -716,33 +774,35 @@ if __name__ == "__main__":
 
     sentence_count = 0
 
-    test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62',
-                '$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A',
-                '$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68',
-                '$GPRMC,180041.896,A,3749.1851,N,08338.7891,W,001.9,154.9,240911,,,A*7A',
-                '$GPRMC,180049.896,A,3749.1808,N,08338.7869,W,001.8,156.3,240911,,,A*70',
-                '$GPRMC,092751.000,A,5321.6802,N,00630.3371,W,0.06,31.66,280511,,,A*45']
+    test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62\n',
+                '$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A\n',
+                '$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E*68\n',
+                '$GPRMC,180041.896,A,3749.1851,N,08338.7891,W,001.9,154.9,240911,,,A*7A\n',
+                '$GPRMC,180049.896,A,3749.1808,N,08338.7869,W,001.8,156.3,240911,,,A*70\n',
+                '$GPRMC,092751.000,A,5321.6802,N,00630.3371,W,0.06,31.66,280511,,,A*45\n']
 
-    test_VTG = ['$GPVTG,232.9,T,,M,002.3,N,004.3,K,A*01']
-    test_GGA = ['$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C']
-    test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37',
-                '$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33']
-    test_GSV = ['$GPGSV,3,1,12,28,72,355,39,01,52,063,33,17,51,272,44,08,46,184,38*74',
-                '$GPGSV,3,2,12,24,42,058,33,11,34,053,33,07,20,171,40,20,15,116,*71',
-                '$GPGSV,3,3,12,04,12,204,34,27,11,324,35,32,11,089,,26,10,264,40*7B',
-                '$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74',
-                '$GPGSV,3,2,11,14,25,170,00,16,57,208,39,18,67,296,40,19,40,246,00*74',
-                '$GPGSV,3,3,11,22,42,067,42,24,14,311,43,27,05,244,00,,,,*4D',
-                '$GPGSV,4,1,14,22,81,349,25,14,64,296,22,18,54,114,21,51,40,212,*7D',
-                '$GPGSV,4,2,14,24,30,047,22,04,22,312,26,31,22,204,,12,19,088,23*72',
-                '$GPGSV,4,3,14,25,17,127,18,21,16,175,,11,09,315,16,19,05,273,*72',
-                '$GPGSV,4,4,14,32,05,303,,15,02,073,*7A']
-    test_GLL = ['$GPGLL,3711.0942,N,08671.4472,W,000812.000,A,A*46',
-                '$GPGLL,4916.45,N,12311.12,W,225444,A,*1D',
-                '$GPGLL,4250.5589,S,14718.5084,E,092204.999,A*2D',
-                '$GPGLL,0000.0000,N,00000.0000,E,235947.000,V*2D']
+    test_VTG = ['$GPVTG,232.9,T,,M,002.3,N,004.3,K,A*01\n']
+    test_GGA = ['$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C\n']
+    test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37\n',
+                '$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33\n']
+    test_GSV = ['$GPGSV,3,1,12,28,72,355,39,01,52,063,33,17,51,272,44,08,46,184,38*74\n',
+                '$GPGSV,3,2,12,24,42,058,33,11,34,053,33,07,20,171,40,20,15,116,*71\n',
+                '$GPGSV,3,3,12,04,12,204,34,27,11,324,35,32,11,089,,26,10,264,40*7B\n',
+                '$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74\n',
+                '$GPGSV,3,2,11,14,25,170,00,16,57,208,39,18,67,296,40,19,40,246,00*74\n',
+                '$GPGSV,3,3,11,22,42,067,42,24,14,311,43,27,05,244,00,,,,*4D\n',
+                '$GPGSV,4,1,14,22,81,349,25,14,64,296,22,18,54,114,21,51,40,212,*7D\n',
+                '$GPGSV,4,2,14,24,30,047,22,04,22,312,26,31,22,204,,12,19,088,23*72\n',
+                '$GPGSV,4,3,14,25,17,127,18,21,16,175,,11,09,315,16,19,05,273,*72\n',
+                '$GPGSV,4,4,14,32,05,303,,15,02,073,*7A\n']
+    test_GLL = ['$GPGLL,3711.0942,N,08671.4472,W,000812.000,A,A*46\n',
+                '$GPGLL,4916.45,N,12311.12,W,225444,A,*1D\n',
+                '$GPGLL,4250.5589,S,14718.5084,E,092204.999,A*2D\n',
+                '$GPGLL,0000.0000,N,00000.0000,E,235947.000,V*2D\n']
 
     my_gps = MicropyGPS()
+    my_gps.start_logging('test.txt', mode="new")
+    my_gps.write_log('micropyGPS test log\n')
     sentence = ''
     for RMC_sentence in test_RMC:
         sentence_count += 1
