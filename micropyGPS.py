@@ -48,7 +48,8 @@ class MicropyGPS(object):
     __NO_FIX = 1
     __FIX_2D = 2
     __FIX_3D = 3
-    __DIRECTIONS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+    __DIRECTIONS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W',
+                    'WNW', 'NW', 'NNW']
     __MONTHS = ('January', 'February', 'March', 'April', 'May',
                 'June', 'July', 'August', 'September', 'October',
                 'November', 'December')
@@ -150,10 +151,9 @@ class MicropyGPS(object):
         """
         Create GPS data log object
         """
-        if mode == 'new':
-            mode_code = 'w'
-        else:
-            mode_code = 'a'
+        # Set Write Mode Overwrite or Append
+        mode_code = 'w' if mode == 'new' else 'a'
+
         try:
             self.log_handle = open(target_file, mode_code)
         except AttributeError:
@@ -189,8 +189,9 @@ class MicropyGPS(object):
     # Sentence Parsers
     ########################################
     def gprmc(self):
-        """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence. Updates UTC timestamp, latitude,
-        longitude, Course, Speed, Date, and fix status"""
+        """Parse Recommended Minimum Specific GPS/Transit data (RMC)Sentence.
+        Updates UTC timestamp, latitude, longitude, Course, Speed, Date, and fix status
+        """
 
         # UTC Timestamp
         try:
