@@ -26,7 +26,7 @@
 # More Helper Functions
 # Dynamically limit sentences types to parse
 
-from math import floor
+from math import floor, modf
 
 # Import pyb or time for fix time handling
 try:
@@ -54,8 +54,15 @@ class MicropyGPS(object):
                 'June', 'July', 'August', 'September', 'October',
                 'November', 'December')
 
-    def __init__(self, local_offset=0):
-        """Setup GPS Object Status Flags, Internal Data Registers, etc"""
+    def __init__(self, local_offset=0, location_formatting='ddm'):
+        """
+        Setup GPS Object Status Flags, Internal Data Registers, etc
+            local_offset (int): Timzone Difference to UTC
+            location_formatting (str): Style For Presenting Longitude/Latitude:
+                                       Decimal Degree Minute (ddm) - 40° 26.767′ N
+                                       Degrees Minutes Seconds (dms) - 40° 26′ 46″ N
+                                       Decimal Degrees (dd) - 40.446° N
+        """
 
         #####################
         # Object Status Flags
@@ -86,8 +93,9 @@ class MicropyGPS(object):
         self.local_offset = local_offset
 
         # Position/Motion
-        self.latitude = (0, 0.0, 'N')
-        self.longitude = (0, 0.0, 'W')
+        self._latitude = (0, 0.0, 'N')
+        self._longitude = (0, 0.0, 'W')
+        self.coord_format = location_formatting
         self.speed = (0.0, 0.0, 0.0)
         self.course = 0.0
         self.altitude = 0.0
@@ -106,6 +114,35 @@ class MicropyGPS(object):
         self.valid = False
         self.fix_stat = 0
         self.fix_type = 1
+
+    ########################################
+    # Coordinates Translation Functions
+    ########################################
+    @property
+    def latitude(self):
+        """Format Latitude Data Correctly"""
+        if self.coord_format == 'dd':
+            decimal_degrees = self._latitude[0] + (self._latitude[1] / 60)
+            return [decimal_degrees, self._latitude[2]]
+        elif self.coord_format == 'dms':
+            minute_parts = modf(self._latitude[1])
+            seconds = round(minute_parts[0] * 60)
+            return [self._latitude[0], int(minute_parts[1]), seconds, self._latitude[2]]
+        else:
+            return self._latitude
+
+    @property
+    def longitude(self):
+        """Format Longitude Data Correctly"""
+        if self.coord_format == 'dd':
+            decimal_degrees = self._longitude[0] + (self._longitude[1] / 60)
+            return [decimal_degrees, self._longitude[2]]
+        elif self.coord_format == 'dms':
+            minute_parts = modf(self._longitude[1])
+            seconds = round(minute_parts[0] * 60)
+            return [self._longitude[0], int(minute_parts[1]), seconds, self._longitude[2]]
+        else:
+            return self._longitude
 
     ########################################
     # Logging Related Functions
@@ -228,8 +265,8 @@ class MicropyGPS(object):
             # TODO - Add Magnetic Variation
 
             # Update Object Data
-            self.latitude = (lat_degs, lat_mins, lat_hemi)
-            self.longitude = (lon_degs, lon_mins, lon_hemi)
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             # Include mph and hm/h
             self.speed = (spd_knt, spd_knt * 1.151, spd_knt * 1.852)
             self.course = course
@@ -239,8 +276,8 @@ class MicropyGPS(object):
             self.new_fix_time()
 
         else:  # Clear Position Data if Sentence is 'Invalid'
-            self.latitude = (0, 0.0, 'N')
-            self.longitude = (0, 0.0, 'W')
+            self._latitude = (0, 0.0, 'N')
+            self._longitude = (0, 0.0, 'W')
             self.speed = (0.0, 0.0, 0.0)
             self.course = 0.0
             self.date = (0, 0, 0)
@@ -293,16 +330,16 @@ class MicropyGPS(object):
                 return False
 
             # Update Object Data
-            self.latitude = (lat_degs, lat_mins, lat_hemi)
-            self.longitude = (lon_degs, lon_mins, lon_hemi)
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             self.valid = True
 
             # Update Last Fix Time
             self.new_fix_time()
 
         else:  # Clear Position Data if Sentence is 'Invalid'
-            self.latitude = (0, 0.0, 'N')
-            self.longitude = (0, 0.0, 'W')
+            self._latitude = (0, 0.0, 'N')
+            self._longitude = (0, 0.0, 'W')
             self.valid = False
 
         return True
@@ -383,8 +420,8 @@ class MicropyGPS(object):
                 return False
 
             # Update Object Data
-            self.latitude = (lat_degs, lat_mins, lat_hemi)
-            self.longitude = (lon_degs, lon_mins, lon_hemi)
+            self._latitude = (lat_degs, lat_mins, lat_hemi)
+            self._longitude = (lon_degs, lon_mins, lon_hemi)
             self.altitude = altitude
             self.geoid_height = geoid_height
 
@@ -673,7 +710,14 @@ class MicropyGPS(object):
         Create a readable string of the current latitude data
         :return: string
         """
-        lat_string = str(self.latitude[0]) + '° ' + str(self.latitude[1]) + "' " + str(self.latitude[2])
+        if self.coord_format == 'dd':
+            formatted_latitude = self.latitude
+            lat_string = str(formatted_latitude[0]) + '° ' + str(self._latitude[2])
+        elif self.coord_format == 'dms':
+            formatted_latitude = self.latitude
+            lat_string = str(formatted_latitude[0]) + '° ' + str(formatted_latitude[1]) + "' " + str(formatted_latitude[2]) + '" ' + str(formatted_latitude[3])
+        else:
+            lat_string = str(self._latitude[0]) + '° ' + str(self._latitude[1]) + "' " + str(self._latitude[2])
         return lat_string
 
     def longitude_string(self):
@@ -681,8 +725,15 @@ class MicropyGPS(object):
         Create a readable string of the current longitude data
         :return: string
         """
-        lat_string = str(self.longitude[0]) + '° ' + str(self.longitude[1]) + "' " + str(self.longitude[2])
-        return lat_string
+        if self.coord_format == 'dd':
+            formatted_longitude = self.longitude
+            lon_string = str(formatted_longitude[0]) + '° ' + str(self._longitude[2])
+        elif self.coord_format == 'dms':
+            formatted_longitude = self.longitude
+            lon_string = str(formatted_longitude[0]) + '° ' + str(formatted_longitude[1]) + "' " + str(formatted_longitude[2]) + '" ' + str(formatted_longitude[3])
+        else:
+            lon_string = str(self._longitude[0]) + '° ' + str(self._longitude[1]) + "' " + str(self._longitude[2])
+        return lon_string
 
     def speed_string(self, unit='kph'):
         """
@@ -808,6 +859,8 @@ if __name__ == "__main__":
         sentence_count += 1
         for y in RMC_sentence:
             sentence = my_gps.update(y)
+            if sentence:
+                break
         print('Parsed a', sentence, 'Sentence')
         print('Parsed Strings:', my_gps.gps_segments)
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
@@ -825,6 +878,8 @@ if __name__ == "__main__":
         sentence_count += 1
         for y in GLL_sentence:
             sentence = my_gps.update(y)
+            if sentence:
+                break
         print('Parsed a', sentence, 'Sentence')
         print('Parsed Strings', my_gps.gps_segments)
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
