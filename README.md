@@ -206,6 +206,6 @@ Beyond the pyBoard, micropyGPS should run on other embedded platforms that have 
 [Micropython]:https://micropython.org/
 [NMEA-0183]:http://aprs.gids.nl/nmea/
 [TinyGPS]:http://arduiniana.org/libraries/tinygps/ 
-[pyboard]:http://docs.micropython.org/en/latest/quickref.html
+[pyboard]:http://docs.micropython.org/en/latest/pyboard/pyboard/quickref.html
 [MTK_command]:https://github.com/inmcm/MTK_commands
 [Ultimate GPS Breakout]:http://www.adafruit.com/product/746
