@@ -32,10 +32,10 @@ there, just create a new GPS object and start feeding it data using the ```updat
 >>> my_gps.latitude
 (37, 51.65, 'S')
 ```
-The object will continue to accept new characters and parse sentences for as long as it exists. Running the script standalone will parse a number of example sentences and print the results demonstrating the variety of data tracked by the object
+The object will continue to accept new characters and parse sentences for as long as it exists. Running the ```tests.py``` script will parse a number of example sentences and print the results demonstrating the variety of data tracked by the object
 
 ```sh
-$ python micropyGPS.py
+$ python tests.py
 ```
 
 ### Currently Supported Sentences 
