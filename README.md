@@ -14,6 +14,27 @@ Features:
  - Parser written with a serial UART data source in mind; works on a single character at a time with
    robust error handling for noisy embedded environments
  - Modeled after the great [TinyGPS] Arduino library
+
+## Install / uninstall
+
+Install by cloning from git and running install via setuptools.
+
+```sh
+git clone https://github.com/bsdz/micropyGPS.git
+python setup.py install
+```
+
+Or install directly from github using pip.
+
+```sh
+pip install git+https://github.com/bsdz/micropyGPS.git
+```
+
+To uninstall use the following pip command.
+
+```sh
+pip uninstall micropyGPS
+```
    
    
 ## Basic Usage
