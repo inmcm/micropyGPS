@@ -14,8 +14,8 @@ Features:
  - Parser written with a serial UART data source in mind; works on a single character at a time with
    robust error handling for noisy embedded environments
  - Modeled after the great [TinyGPS] Arduino library
-   
-   
+
+
 ## Basic Usage
 
 micropyGPS is easy to use: copy micropyGPS.py into your project directory and import the MicropyGPS class into your script. From
@@ -38,15 +38,23 @@ The object will continue to accept new characters and parse sentences for as lon
 $ python tests.py
 ```
 
-### Currently Supported Sentences 
+### Currently Supported Sentences
 
 * GPRMC
+* GLRMC
+* GNRMC
 * GPGLL
+* GLGLL
 * GPGGA
+* GLGGA
+* GNGGA
 * GPVTG
+* GLVTG
+* GNVTG
 * GPGSA
+* GLGSA
 * GPGSV
-
+* GLGSV
 
 ### Position Data
 Data successfully parsed from valid sentences is stored in easily accessible object variables. Data with multiple components (like latitude and longitude) is stored in tuples.
@@ -91,7 +99,7 @@ The timezone can be automatically adjusted for using the by setting the ```local
 (3, 18, 36.0)
 ```
 
-The current UTC date is stored (day,month,year). **NOTE:** The date is not currently adjusted to match the timezone set in ```local_offset```. 
+The current UTC date is stored (day,month,year). **NOTE:** The date is not currently adjusted to match the timezone set in ```local_offset```.
 ```sh
 >>> my_gps.date
 (22, 9, 05)
@@ -120,7 +128,7 @@ Signal quality and individual satellite information is collected from GSV, GSA, 
 >>> my_gps.satellite_data_updated()
 True
 # Satellite data is a dict where the key is the satellite number and the value pair is a tuple containing (Elevation, Azimuth, SNR (if available))
->>> my_gps.satellite_data 
+>>> my_gps.satellite_data
 {19: (5, 273, None), 32: (5, 303, None), 4: (22, 312, 26), 11: (9, 315, 16), 12: (19, 88, 23), 14: (64, 296, 22), 15: (2, 73, None), 18: (54, 114, 21), 51: (40, 212, None), 21: (16, 175, None), 22: (81, 349, 25), 24: (30, 47, 22), 25: (17, 127, 18), 31: (22, 204, None)}
 # Returns just the satellite PRNs visible
 >>> my_gps.satellites_visible()
@@ -194,18 +202,22 @@ Test scripts are included to help get started with using micropyGPS on the [pybo
 
 Adjusting the baud rate and update rate of the receiver can be easily accomplished with my companion [MTK_command] script
 
-An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] (minus the PPS signal needed in the external interrupt example) is shown below. 
+An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] (minus the PPS signal needed in the external interrupt example) is shown below.
 
-![hookup](http://i.imgur.com/yd4Mjka.jpg?1) 
+![hookup](http://i.imgur.com/yd4Mjka.jpg?1)
+
+## ESP32
+You can follow the setup instructions for the pyboard. The only difference is, that you shoud use micropyGPS as a [frozen module]. Otherwise there will be exceptions, because there is not enough heap space available.
 
 ## Other Platforms
-As mentioned above, micropyGPS also runs on Python3.x (that's where most of the development was done!). This is useful for testing code or just parsing existing log files. 
+As mentioned above, micropyGPS also runs on Python3.x (that's where most of the development was done!). This is useful for testing code or just parsing existing log files.
 
-Beyond the pyBoard, micropyGPS should run on other embedded platforms that have an Python3 interpreter such as the Raspberry Pi and BeagleBone boards. These other devices are currently untested.
+Beyond the pyBoard and ESP32, micropyGPS should run on other embedded platforms that have an Python3 interpreter such as the Raspberry Pi and BeagleBone boards. These other devices are currently untested.
 
 [Micropython]:https://micropython.org/
+[frozen module]:https://learn.adafruit.com/micropython-basics-loading-modules/frozen-modules
 [NMEA-0183]:http://aprs.gids.nl/nmea/
-[TinyGPS]:http://arduiniana.org/libraries/tinygps/ 
+[TinyGPS]:http://arduiniana.org/libraries/tinygps/
 [pyboard]:http://docs.micropython.org/en/latest/pyboard/pyboard/quickref.html
 [MTK_command]:https://github.com/inmcm/MTK_commands
 [Ultimate GPS Breakout]:http://www.adafruit.com/product/746
