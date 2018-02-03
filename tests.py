@@ -7,8 +7,7 @@ Tests for micropyGPS module
 
 from micropyGPS import MicropyGPS
 
-if __name__ == "__main__":
-
+def run_tests():
     sentence_count = 0
 
     test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62\n',
@@ -149,3 +148,16 @@ if __name__ == "__main__":
     print('Sentences Found:', my_gps.clean_sentences)
     print('Sentences Parsed:', my_gps.parsed_sentences)
     print('CRC_Fails:', my_gps.crc_fails)
+
+import unittest
+
+class TestMicroPyGPS(unittest.TestCase):
+
+    def test_smoke(self):
+        try:
+            run_tests()
+        except:
+            self.fail("smoke test raised exception")
+
+if __name__ == "__main__":
+    run_tests()
