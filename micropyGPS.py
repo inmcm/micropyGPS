@@ -495,32 +495,23 @@ class MicropyGPS(object):
             if self.gps_segments[sats]:
                 try:
                     sat_id = int(self.gps_segments[sats])
-                except ValueError:
-                    return False
-                except Exception:
+                except (ValueError,IndexError):
                     return False
 
                 try:  # elevation can be null (no value) when not tracking
                     elevation = int(self.gps_segments[sats+1])
-                except ValueError:
-                    elevation = None
-                except Exception:
+                except (ValueError,IndexError):
                     elevation = None
 
                 try:  # azimuth can be null (no value) when not tracking
                     azimuth = int(self.gps_segments[sats+2])
-                except ValueError:
-                    azimuth = None
-                except Exception:
+                except (ValueError,IndexError):
                     azimuth = None
 
                 try:  # SNR can be null (no value) when not tracking
                     snr = int(self.gps_segments[sats+3])
-                except ValueError:
+                except (ValueError,IndexError):
                     snr = None
-                except Exception:
-                    snr = None
-
             # If no PRN is found, then the sentence has no more satellites to read
             else:
                 break

@@ -217,7 +217,7 @@ Beyond the pyBoard and ESP32, micropyGPS should run on other embedded platforms 
 [Micropython]:https://micropython.org/
 [frozen module]:https://learn.adafruit.com/micropython-basics-loading-modules/frozen-modules
 [NMEA-0183]:http://aprs.gids.nl/nmea/
-[TinyGPS]:http://arduiniana.org/libraries/tinygps/
+[TinyGPS]:http://arduiniana.org/libraries/tinygps/ 
 [pyboard]:http://docs.micropython.org/en/latest/pyboard/pyboard/quickref.html
 [MTK_command]:https://github.com/inmcm/MTK_commands
 [Ultimate GPS Breakout]:http://www.adafruit.com/product/746
