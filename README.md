@@ -62,11 +62,20 @@ $ python tests.py
 ### Currently Supported Sentences 
 
 * GPRMC
+* GLRMC
+* GNRMC
 * GPGLL
+* GLGLL
 * GPGGA
+* GLGGA
+* GNGGA
 * GPVTG
+* GLVTG
+* GNVTG
 * GPGSA
+* GLGSA
 * GPGSV
+* GLGSV
 
 
 ### Position Data
@@ -215,16 +224,20 @@ Test scripts are included to help get started with using micropyGPS on the [pybo
 
 Adjusting the baud rate and update rate of the receiver can be easily accomplished with my companion [MTK_command] script
 
-An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] (minus the PPS signal needed in the external interrupt example) is shown below. 
+An example of how to hookup the pyboard to the Adafruit [Ultimate GPS Breakout] (minus the PPS signal needed in the external interrupt example) is shown below.
 
-![hookup](http://i.imgur.com/yd4Mjka.jpg?1) 
+![hookup](http://i.imgur.com/yd4Mjka.jpg?1)
+
+## ESP32
+You can follow the setup instructions for the pyboard. The only difference is, that you shoud use micropyGPS as a [frozen module]. Otherwise there will be exceptions, because there is not enough heap space available.
 
 ## Other Platforms
 As mentioned above, micropyGPS also runs on Python3.x (that's where most of the development was done!). This is useful for testing code or just parsing existing log files. 
 
-Beyond the pyBoard, micropyGPS should run on other embedded platforms that have an Python3 interpreter such as the Raspberry Pi and BeagleBone boards. These other devices are currently untested.
+Beyond the pyBoard and ESP32, micropyGPS should run on other embedded platforms that have an Python3 interpreter such as the Raspberry Pi and BeagleBone boards. These other devices are currently untested.
 
 [Micropython]:https://micropython.org/
+[frozen module]:https://learn.adafruit.com/micropython-basics-loading-modules/frozen-modules
 [NMEA-0183]:http://aprs.gids.nl/nmea/
 [TinyGPS]:http://arduiniana.org/libraries/tinygps/ 
 [pyboard]:http://docs.micropython.org/en/latest/pyboard/pyboard/quickref.html
