@@ -81,6 +81,8 @@ def run_tests():
         sentence_count += 1
         for y in VTG_sentence:
             sentence = my_gps.update(y)
+            if sentence:
+                break
         print('Parsed a', sentence, 'Sentence')
         print('Parsed Strings', my_gps.gps_segments)
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
@@ -93,6 +95,8 @@ def run_tests():
         sentence_count += 1
         for y in GGA_sentence:
             sentence = my_gps.update(y)
+            if sentence:
+                break
         print('Parsed a', sentence, 'Sentence')
         print('Parsed Strings', my_gps.gps_segments)
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
@@ -110,6 +114,8 @@ def run_tests():
         sentence_count += 1
         for y in GSA_sentence:
             sentence = my_gps.update(y)
+            if sentence:
+                break
         print('Parsed a', sentence, 'Sentence')
         print('Parsed Strings', my_gps.gps_segments)
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
@@ -124,6 +130,8 @@ def run_tests():
         sentence_count += 1
         for y in GSV_sentence:
             sentence = my_gps.update(y)
+            if sentence:
+                break
         print('Parsed a', sentence, 'Sentence')
         print('Parsed Strings', my_gps.gps_segments)
         print('Sentence CRC Value:', hex(my_gps.crc_xor))
