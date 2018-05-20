@@ -182,7 +182,7 @@ class MicropyGPS(object):
             utc_string = self.gps_segments[1]
 
             if utc_string:  # Possible timestamp found
-                hours = int(utc_string[0:2]) + self.local_offset
+                hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
                 self.timestamp = (hours, minutes, seconds)
@@ -278,7 +278,7 @@ class MicropyGPS(object):
             utc_string = self.gps_segments[5]
 
             if utc_string:  # Possible timestamp found
-                hours = int(utc_string[0:2]) + self.local_offset
+                hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
                 self.timestamp = (hours, minutes, seconds)
@@ -351,7 +351,7 @@ class MicropyGPS(object):
 
             # Skip timestamp if receiver doesn't have on yet
             if utc_string:
-                hours = int(utc_string[0:2]) + self.local_offset
+                hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
             else:
