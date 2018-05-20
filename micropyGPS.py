@@ -483,7 +483,8 @@ class MicropyGPS(object):
 
         # Calculate  Number of Satelites to pull data for and thus how many segment positions to read
         if num_sv_sentences == current_sv_sentence:
-            sat_segment_limit = ((sats_in_view % 4) * 4) + 4  # Last sentence may have 1-4 satellites
+            # Last sentence may have 1-4 satellites; 5 - 20 positions
+            sat_segment_limit = (sats_in_view - ((num_sv_sentences - 1) * 4)) * 5
         else:
             sat_segment_limit = 20  # Non-last sentences have 4 satellites and thus read up to position 20
 
