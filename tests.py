@@ -33,7 +33,10 @@ def run_tests():
                 '$GPGSV,4,1,14,22,81,349,25,14,64,296,22,18,54,114,21,51,40,212,*7D\n',
                 '$GPGSV,4,2,14,24,30,047,22,04,22,312,26,31,22,204,,12,19,088,23*72\n',
                 '$GPGSV,4,3,14,25,17,127,18,21,16,175,,11,09,315,16,19,05,273,*72\n',
-                '$GPGSV,4,4,14,32,05,303,,15,02,073,*7A\n']
+                '$GPGSV,4,4,14,32,05,303,,15,02,073,*7A\n',
+                '$GPGSV,3,1,12,13,65,002,50,02,61,098,47,39,60,352,,05,56,183,49*70\n',
+                '$GPGSV,3,2,12,15,35,325,50,29,32,229,49,06,25,070,44,30,16,096,38*70\n',
+                '$GPGSV,3,3,12,19,08,022,35,07,07,122,,12,06,316,49,25,03,278,36*7D\n']
     test_GLL = ['$GPGLL,3711.0942,N,08671.4472,W,000812.000,A,A*46\n',
                 '$GPGLL,4916.45,N,12311.12,W,225444,A,*1D\n',
                 '$GPGLL,4250.5589,S,14718.5084,E,092204.999,A*2D\n',
@@ -141,8 +144,11 @@ def run_tests():
         data_valid = my_gps.satellite_data_updated()
         print('Is Satellite Data Valid?:', data_valid)
         if data_valid:
-            print('Satellite Data:', my_gps.satellite_data)
-            print('Satellites Visible:', my_gps.satellites_visible())
+            print('Complete Satellite Data:', my_gps.satellite_data)
+            print('Complete Satellites Visible:', my_gps.satellites_visible())
+        else:
+            print('Current Satellite Data:', my_gps.satellite_data)
+            print('Current Satellites Visible:', my_gps.satellites_visible())
         print('')
 
     print("Pretty Print Examples:")
