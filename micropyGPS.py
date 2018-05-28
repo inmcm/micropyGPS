@@ -763,7 +763,7 @@ class MicropyGPS(object):
                 suffix = 'st'
             elif self.date[0] in (2, 22):
                 suffix = 'nd'
-            elif self.date[0] == 3:
+            elif self.date[0] == (3, 23):
                 suffix = 'rd'
             else:
                 suffix = 'th'
