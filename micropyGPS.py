@@ -27,7 +27,7 @@ class MicropyGPS(object):
     Parses sentences one character at a time using update(). """
 
     # Max Number of Characters a valid sentence can be (based on GGA sentence)
-    SENTENCE_LIMIT = 76
+    SENTENCE_LIMIT = 90
     __HEMISPHERES = ('N', 'S', 'E', 'W')
     __NO_FIX = 1
     __FIX_2D = 2
