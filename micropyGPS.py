@@ -264,7 +264,6 @@ class MicropyGPS(object):
             self._longitude = (0, 0.0, 'W')
             self.speed = (0.0, 0.0, 0.0)
             self.course = 0.0
-            self.date = (0, 0, 0)
             self.valid = False
 
         return True
