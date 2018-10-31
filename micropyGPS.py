@@ -32,8 +32,8 @@ class MicropyGPS(object):
     __NO_FIX = 1
     __FIX_2D = 2
     __FIX_3D = 3
-    __DIRECTIONS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W',
-                    'WNW', 'NW', 'NNW']
+    __DIRECTIONS = ('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W',
+                    'WNW', 'NW', 'NNW')
     __MONTHS = ('January', 'February', 'March', 'April', 'May',
                 'June', 'July', 'August', 'September', 'October',
                 'November', 'December')
@@ -72,15 +72,15 @@ class MicropyGPS(object):
         #####################
         # Data From Sentences
         # Time
-        self.timestamp = (0, 0, 0)
-        self.date = (0, 0, 0)
+        self.timestamp = [0, 0, 0]
+        self.date = [0, 0, 0]
         self.local_offset = local_offset
 
         # Position/Motion
-        self._latitude = (0, 0.0, 'N')
-        self._longitude = (0, 0.0, 'W')
+        self._latitude = [0, 0.0, 'N']
+        self._longitude = [0, 0.0, 'W']
         self.coord_format = location_formatting
-        self.speed = (0.0, 0.0, 0.0)
+        self.speed = [0.0, 0.0, 0.0]
         self.course = 0.0
         self.altitude = 0.0
         self.geoid_height = 0.0
@@ -249,10 +249,10 @@ class MicropyGPS(object):
             # TODO - Add Magnetic Variation
 
             # Update Object Data
-            self._latitude = (lat_degs, lat_mins, lat_hemi)
-            self._longitude = (lon_degs, lon_mins, lon_hemi)
+            self._latitude = [lat_degs, lat_mins, lat_hemi]
+            self._longitude = [lon_degs, lon_mins, lon_hemi]
             # Include mph and hm/h
-            self.speed = (spd_knt, spd_knt * 1.151, spd_knt * 1.852)
+            self.speed = [spd_knt, spd_knt * 1.151, spd_knt * 1.852]
             self.course = course
             self.valid = True
 
@@ -260,11 +260,11 @@ class MicropyGPS(object):
             self.new_fix_time()
 
         else:  # Clear Position Data if Sentence is 'Invalid'
-            self._latitude = (0, 0.0, 'N')
-            self._longitude = (0, 0.0, 'W')
-            self.speed = (0.0, 0.0, 0.0)
+            self._latitude = [0, 0.0, 'N']
+            self._longitude = [0, 0.0, 'W']
+            self.speed = [0.0, 0.0, 0.0]
             self.course = 0.0
-            self.date = (0, 0, 0)
+            self.date = [0, 0, 0]
             self.valid = False
 
         return True
@@ -314,16 +314,16 @@ class MicropyGPS(object):
                 return False
 
             # Update Object Data
-            self._latitude = (lat_degs, lat_mins, lat_hemi)
-            self._longitude = (lon_degs, lon_mins, lon_hemi)
+            self._latitude = [lat_degs, lat_mins, lat_hemi]
+            self._longitude = [lon_degs, lon_mins, lon_hemi]
             self.valid = True
 
             # Update Last Fix Time
             self.new_fix_time()
 
         else:  # Clear Position Data if Sentence is 'Invalid'
-            self._latitude = (0, 0.0, 'N')
-            self._longitude = (0, 0.0, 'W')
+            self._latitude = [0, 0.0, 'N']
+            self._longitude = [0, 0.0, 'W']
             self.valid = False
 
         return True
@@ -404,13 +404,13 @@ class MicropyGPS(object):
                 return False
 
             # Update Object Data
-            self._latitude = (lat_degs, lat_mins, lat_hemi)
-            self._longitude = (lon_degs, lon_mins, lon_hemi)
+            self._latitude = [lat_degs, lat_mins, lat_hemi]
+            self._longitude = [lon_degs, lon_mins, lon_hemi]
             self.altitude = altitude
             self.geoid_height = geoid_height
 
         # Update Object Data
-        self.timestamp = (hours, minutes, seconds)
+        self.timestamp = [hours, minutes, seconds]
         self.satellites_in_use = satellites_in_use
         self.hdop = hdop
         self.fix_stat = fix_stat
