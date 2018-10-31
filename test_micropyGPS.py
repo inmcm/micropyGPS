@@ -398,3 +398,20 @@ def test_pretty_print():
     print('Date (Short D/M/Y Format):', my_gps.date_string('s_dmy'))
     assert my_gps.date_string('s_mdy') == '05/28/11'
     print('Date (Short M/D/Y Format):', my_gps.date_string('s_mdy'))
+
+
+def test_coordinate_representations():
+    my_gps = MicropyGPS(location_formatting='dd')
+    for RMC_sentence in test_RMC[5]:
+        for y in RMC_sentence:
+            my_gps.update(y)
+    print('')
+    assert my_gps.latitude_string() == '53.361336666666666° N'
+    print('Decimal Degrees Latitude:', my_gps.latitude_string())
+    assert my_gps.longitude_string() == '6.5056183333333335° W'
+    print('Decimal Degrees Longitude:', my_gps.longitude_string())
+    my_gps.coord_format = 'dms'
+    print('Degrees Minutes Seconds Latitude:', my_gps.latitude_string())
+    assert my_gps.latitude_string() == """53° 21' 41" N"""
+    assert my_gps.longitude_string() == """6° 30' 20" W"""
+    print('Degrees Minutes Seconds Longitude:', my_gps.longitude_string())
