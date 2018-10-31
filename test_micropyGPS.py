@@ -154,21 +154,33 @@ def test_rmc_sentences():
     my_gps = MicropyGPS()
     sentence = ''
     sentence_count = 0
+    print('')
     for RMC_sentence in test_RMC:
         for y in RMC_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPRMC"
+                print('Parsed a', sentence, 'Sentence')
                 assert my_gps.gps_segments == rmc_parsed_strings[sentence_count]
+                print('Parsed Strings:', my_gps.gps_segments)
                 assert my_gps.crc_xor == rmc_crc_values[sentence_count]
+                print('Sentence CRC Value:', hex(my_gps.crc_xor))
                 assert my_gps.longitude == rmc_longitude[sentence_count]
+                print('Longitude:', my_gps.longitude)
                 assert my_gps.latitude == rmc_latitude[sentence_count]
+                print('Latitude', my_gps.latitude)
                 assert my_gps.timestamp == rmc_utc[sentence_count]
+                print('UTC Timestamp:', my_gps.timestamp)
                 assert my_gps.speed == rmc_speed[sentence_count]
+                print('Speed:', my_gps.speed)
                 assert my_gps.date == rmc_date[sentence_count]
+                print('Date Stamp:', my_gps.date)
                 assert my_gps.course == rmc_course[sentence_count]
+                print('Course', my_gps.course)
                 assert my_gps.valid
+                print('Data is Valid:', my_gps.valid)
                 assert my_gps.compass_direction() == rmc_compass[sentence_count]
+                print('Compass Direction:', my_gps.compass_direction())
                 sentence_count += 1
     assert my_gps.clean_sentences == len(test_RMC)
     assert my_gps.parsed_sentences == len(test_RMC)
@@ -179,16 +191,23 @@ def test_vtg_sentences():
     my_gps = MicropyGPS()
     sentence = ''
     sentence_count = 0
+    print('')
     for VTG_sentence in test_VTG:
         for y in VTG_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPVTG"
+                print('Parsed a', sentence, 'Sentence')
                 assert my_gps.gps_segments == ['GPVTG', '232.9', 'T', '', 'M', '002.3', 'N', '004.3', 'K', 'A', '01']
+                print('Parsed Strings', my_gps.gps_segments)
                 assert my_gps.crc_xor == 0x1
+                print('Sentence CRC Value:', hex(my_gps.crc_xor))
                 assert my_gps.speed == (2.3, 2.6473, 4.2596)
+                print('Speed:', my_gps.speed)
                 assert my_gps.course == 232.9
+                print('Course', my_gps.course)
                 assert my_gps.compass_direction() == 'SW'
+                print('Compass Direction:', my_gps.compass_direction())
                 sentence_count += 1
     assert my_gps.clean_sentences == len(test_VTG)
     assert my_gps.parsed_sentences == len(test_VTG)
@@ -199,21 +218,33 @@ def test_gga_sentences():
     my_gps = MicropyGPS()
     sentence = ''
     sentence_count = 0
+    print('')
     for GGA_sentence in test_GGA:
         for y in GGA_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPGGA"
+                print('Parsed a', sentence, 'Sentence')
                 assert my_gps.gps_segments == ['GPGGA', '180050.896', '3749.1802', 'N', '08338.7865', 'W', '1', '07', '1.1', '397.4', 'M', '-32.5', 'M', '', '0000', '6C']
+                print('Parsed Strings', my_gps.gps_segments)
                 assert my_gps.crc_xor == 0x6c
+                print('Sentence CRC Value:', hex(my_gps.crc_xor))
                 assert my_gps.longitude == [83, 38.7865, 'W']
+                print('Longitude', my_gps.longitude)
                 assert my_gps.latitude == [37, 49.1802, 'N']
+                print('Latitude', my_gps.latitude)
                 assert my_gps.timestamp == [18, 0, 50.896]
+                print('UTC Timestamp:', my_gps.timestamp)
                 assert my_gps.fix_stat == 1
+                print('Fix Status:', my_gps.fix_stat)
                 assert my_gps.altitude == 397.4
+                print('Altitude:', my_gps.altitude)
                 assert my_gps.geoid_height == -32.5
+                print('Height Above Geoid:', my_gps.geoid_height)
                 assert my_gps.hdop == 1.1
+                print('Horizontal Dilution of Precision:', my_gps.hdop)
                 assert my_gps.satellites_in_use == 7
+                print('Satellites in Use by Receiver:', my_gps.satellites_in_use)
                 sentence_count += 1
     assert my_gps.clean_sentences == len(test_GGA)
     assert my_gps.parsed_sentences == len(test_GGA)
@@ -224,18 +255,27 @@ def test_gsa_sentences():
     my_gps = MicropyGPS()
     sentence = ''
     sentence_count = 0
+    print('')
     for GSA_sentence in test_GSA:
         for y in GSA_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPGSA"
+                print('Parsed a', sentence, 'Sentence')
                 assert my_gps.gps_segments == gsa_parsed_strings[sentence_count]
+                print('Parsed Strings', my_gps.gps_segments)
                 assert my_gps.crc_xor == gsa_crc_values[sentence_count]
+                print('Sentence CRC Value:', hex(my_gps.crc_xor))
                 assert my_gps.satellites_used == gsa_sats_used[sentence_count]
+                print('Satellites Used', my_gps.satellites_used)
                 assert my_gps.fix_type == 3
+                print('Fix Type Code:', my_gps.fix_type)
                 assert my_gps.hdop == gsa_hdop[sentence_count]
+                print('Horizontal Dilution of Precision:', my_gps.hdop)
                 assert my_gps.vdop == gsa_vdop[sentence_count]
+                print('Vertical Dilution of Precision:', my_gps.vdop)
                 assert my_gps.pdop == gsa_pdop[sentence_count]
+                print('Position Dilution of Precision:', my_gps.pdop)
                 sentence_count += 1
     assert my_gps.clean_sentences == len(test_GSA)
     assert my_gps.parsed_sentences == len(test_GSA)
@@ -246,17 +286,32 @@ def test_gsv_sentences():
     my_gps = MicropyGPS()
     sentence = ''
     sentence_count = 0
+    print('')
     for GSV_sentence in test_GSV:
         for y in GSV_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPGSV"
+                print('Parsed a', sentence, 'Sentence')
                 assert my_gps.gps_segments == gsv_parsed_string[sentence_count]
+                print('Parsed Strings', my_gps.gps_segments)
                 assert my_gps.crc_xor == gsv_crc_values[sentence_count]
+                print('Sentence CRC Value:', hex(my_gps.crc_xor))
                 assert my_gps.last_sv_sentence == gsv_sv_setence[sentence_count]
+                print('SV Sentences Parsed', my_gps.last_sv_sentence)
                 assert my_gps.total_sv_sentences == gsv_total_sentence[sentence_count]
+                print('SV Sentences in Total', my_gps.total_sv_sentences)
                 assert my_gps.satellites_in_view == gsv_num_sats_in_view[sentence_count]
+                print('# of Satellites in View:', my_gps.satellites_in_view)
                 assert my_gps.satellite_data_updated() == gsv_data_valid[sentence_count]
+                data_valid = my_gps.satellite_data_updated()
+                print('Is Satellite Data Valid?:', data_valid)
+                if data_valid:
+                    print('Complete Satellite Data:', my_gps.satellite_data)
+                    print('Complete Satellites Visible:', my_gps.satellites_visible())
+                else:
+                    print('Current Satellite Data:', my_gps.satellite_data)
+                    print('Current Satellites Visible:', my_gps.satellites_visible())
                 assert my_gps.satellite_data == gsv_sat_data[sentence_count]
                 assert my_gps.satellites_visible() == gsv_sats_in_view[sentence_count]
                 sentence_count += 1
@@ -269,17 +324,25 @@ def test_gll_sentences():
     my_gps = MicropyGPS()
     sentence = ''
     sentence_count = 0
+    print('')
     for GLL_sentence in test_GLL:
         for y in GLL_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPGLL"
+                print('Parsed a', sentence, 'Sentence')
                 assert my_gps.gps_segments == gll_parsed_string[sentence_count]
+                print('Parsed Strings', my_gps.gps_segments)
                 assert my_gps.crc_xor == gll_crc_values[sentence_count]
+                print('Sentence CRC Value:', hex(my_gps.crc_xor))
                 assert my_gps.longitude == gll_longitude[sentence_count]
+                print('Longitude:', my_gps.longitude)
                 assert my_gps.latitude == gll_latitude[sentence_count]
+                print('Latitude', my_gps.latitude)
                 assert my_gps.timestamp == gll_timestamp[sentence_count]
+                print('UTC Timestamp:', my_gps.timestamp)
                 assert my_gps.valid == gll_valid[sentence_count]
+                print('Data is Valid:', my_gps.valid)
                 sentence_count += 1
     assert my_gps.clean_sentences == len(test_GLL)
     assert my_gps.parsed_sentences == len(test_GLL)
@@ -320,11 +383,18 @@ def test_pretty_print():
     for VTG_sentence in test_VTG:
         for y in VTG_sentence:
             my_gps.update(y)
+    print('')
     assert my_gps.latitude_string() == "37° 49.1802' N"
+    print('Latitude:', my_gps.latitude_string())
     assert my_gps.longitude_string() == "83° 38.7865' W"
+    print('Longitude:', my_gps.longitude_string())
     assert my_gps.speed_string('kph') == '4.2596 km/h'
+    print('Speed:', my_gps.speed_string('kph'), 'or', my_gps.speed_string('mph'), 'or', my_gps.speed_string('knot'))
     assert my_gps.speed_string('mph') == '2.6473 mph'
     assert my_gps.speed_string('knot') == '2.3 knots'
     assert my_gps.date_string('long') == 'May 28th, 2011'
+    print('Date (Long Format):', my_gps.date_string('long'))
     assert my_gps.date_string('s_dmy') == '28/05/11'
+    print('Date (Short D/M/Y Format):', my_gps.date_string('s_dmy'))
     assert my_gps.date_string('s_mdy') == '05/28/11'
+    print('Date (Short M/D/Y Format):', my_gps.date_string('s_mdy'))
