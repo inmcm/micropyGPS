@@ -40,7 +40,7 @@ pip uninstall micropyGPS
 ## Basic Usage
 
 micropyGPS is easy to use: copy micropyGPS.py into your project directory and import the MicropyGPS class into your script. From
-there, just create a new GPS object and start feeding it data using the ```update()``` method. After you've feed it an entire valid sentence, it will return the sentence type and the internal values will be updated. The example below shows the parsing of an RMC sentence and the object return a tuple with the current latitude data
+there, just create a new GPS object and start feeding it data using the ```update()``` method. After you've feed it an entire valid sentence, it will return the sentence type and the internal GPS attributes will be updated. The example below shows the parsing of an RMC sentence and the object returns a tuple with the current latitude data
 
 ```sh
 >>> from micropyGPS import MicropyGPS
@@ -53,10 +53,12 @@ there, just create a new GPS object and start feeding it data using the ```updat
 >>> my_gps.latitude
 (37, 51.65, 'S')
 ```
-The object will continue to accept new characters and parse sentences for as long as it exists. Running the ```tests.py``` script will parse a number of example sentences and print the results demonstrating the variety of data tracked by the object
+The object will continue to accept new characters and parse sentences for as long as it exists. Each type of sentence parsed can update different internal attributes in your GPS object.
+
+If you have `pytest` installed, running it with the ```test_micropyGPS.py``` script will parse a number of example sentences of various types and test the various parsing, logging, and printing mechanics.
 
 ```sh
-$ python tests.py
+$ pytest -svvv test_micropyGPS.py
 ```
 
 ### Currently Supported Sentences 
