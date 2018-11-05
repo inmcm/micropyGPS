@@ -68,6 +68,7 @@ $ pytest -svvv test_micropyGPS.py
 * GNRMC
 * GPGLL
 * GLGLL
+* GNGLL
 * GPGGA
 * GLGGA
 * GNGGA
@@ -76,6 +77,7 @@ $ pytest -svvv test_micropyGPS.py
 * GNVTG
 * GPGSA
 * GLGSA
+* GNGSA
 * GPGSV
 * GLGSV
 
