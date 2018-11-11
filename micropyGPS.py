@@ -809,7 +809,8 @@ class MicropyGPS(object):
                            'GPGSV': gpgsv, 'GLGSV': gpgsv,
                            'GPGLL': gpgll, 'GLGLL': gpgll,
                            'GNGGA': gpgga, 'GNRMC': gprmc,
-                           'GNVTG': gpvtg,
+                           'GNVTG': gpvtg, 'GNGLL': gpgll,
+                           'GNGSA': gpgsa,
                           }
 
 if __name__ == "__main__":
