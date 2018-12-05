@@ -242,7 +242,10 @@ class MicropyGPS(object):
 
             # Course
             try:
-                course = float(self.gps_segments[8])
+                if self.gps_segments[8]:
+                    course = float(self.gps_segments[8])
+                else:
+                    course = 0.0
             except ValueError:
                 return False
 
