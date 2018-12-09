@@ -364,14 +364,17 @@ class MicropyGPS(object):
             # Number of Satellites in Use
             satellites_in_use = int(self.gps_segments[7])
 
-            # Horizontal Dilution of Precision
-            hdop = float(self.gps_segments[8])
-
             # Get Fix Status
             fix_stat = int(self.gps_segments[6])
 
-        except ValueError:
+        except (ValueError, IndexError):
             return False
+
+        try:
+            # Horizontal Dilution of Precision
+            hdop = float(self.gps_segments[8])
+        except (ValueError, IndexError):
+            hdop = 0.0
 
         # Process Location and Speed Data if Fix is GOOD
         if fix_stat:
@@ -403,7 +406,8 @@ class MicropyGPS(object):
                 altitude = float(self.gps_segments[9])
                 geoid_height = float(self.gps_segments[11])
             except ValueError:
-                return False
+                altitude = 0
+                geoid_height = 0
 
             # Update Object Data
             self._latitude = [lat_degs, lat_mins, lat_hemi]

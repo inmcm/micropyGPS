@@ -72,7 +72,25 @@ rmc_course = [360.0, 84.4, 54.7, 154.9, 156.3, 31.66, 0.0, 0.0]
 rmc_compass = ['N', 'E', 'NE', 'SSE', 'SSE', 'NNE', 'N', 'N']
 
 test_VTG = ['$GPVTG,232.9,T,,M,002.3,N,004.3,K,A*01\n']
-test_GGA = ['$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C\n']
+
+test_GGA = ['$GPGGA,180126.905,4254.931,N,07702.496,W,0,00,,,M,,M,,*54\n',
+            '$GPGGA,181433.343,4054.931,N,07502.498,W,0,00,,,M,,M,,*52\n',
+            '$GPGGA,180050.896,3749.1802,N,08338.7865,W,1,07,1.1,397.4,M,-32.5,M,,0000*6C\n',
+            '$GPGGA,172814.0,3723.46587704,N,12202.26957864,W,2,6,1.2,18.893,M,-25.669,M,2.0,0031*4F\n']
+gga_parsed_strings = [['GPGGA', '180126.905', '4254.931', 'N', '07702.496', 'W', '0', '00', '', '', 'M', '', 'M', '', '', '54'],
+                      ['GPGGA', '181433.343', '4054.931', 'N', '07502.498', 'W', '0', '00', '', '', 'M', '', 'M', '', '', '52'],
+                      ['GPGGA', '180050.896', '3749.1802', 'N', '08338.7865', 'W', '1', '07', '1.1', '397.4', 'M', '-32.5', 'M', '', '0000', '6C'],
+                      ['GPGGA', '172814.0', '3723.46587704', 'N', '12202.26957864', 'W', '2', '6', '1.2', '18.893', 'M', '-25.669', 'M', '2.0', '0031', '4F']]
+gga_latitudes = [[0, 0.0, 'N'], [0, 0.0, 'N'], [37, 49.1802, 'N'], [37, 23.46587704, 'N']]
+gga_longitudes = [[0, 0.0, 'W'], [0, 0.0, 'W'], [83, 38.7865, 'W'], [122, 2.26957864, 'W']]
+gga_fixes = [0, 0, 1, 2]
+gga_timestamps = [[18, 1, 26.905], [18, 14, 33.343], [18, 0, 50.896], [17, 28, 14.0]]
+gga_hdops = [0.0, 0.0, 1.1, 1.2]
+gga_altitudes = [0.0, 0.0, 397.4, 18.893]
+gga_satellites_in_uses = [0, 0, 7, 6]
+gga_geoid_heights = [0.0, 0.0, -32.5, -25.669]
+gga_crc_xors = [84, 82, 108, 79]
+
 test_GSA = ['$GPGSA,A,3,07,11,28,24,26,08,17,,,,,,2.0,1.1,1.7*37\n',
             '$GPGSA,A,3,07,02,26,27,09,04,15,,,,,,1.8,1.0,1.5*33\n']
 gsa_parsed_strings = [['GPGSA', 'A', '3', '07', '11', '28', '24', '26', '08', '17', '', '', '', '', '', '2.0', '1.1', '1.7', '37'],
@@ -168,9 +186,8 @@ gll_valid = [True, True, True, False]
 def test_rmc_sentences():
     my_gps = MicropyGPS()
     sentence = ''
-    sentence_count = 0
     print('')
-    for RMC_sentence in test_RMC:
+    for sentence_count, RMC_sentence in enumerate(test_RMC):
         for y in RMC_sentence:
             sentence = my_gps.update(y)
             if sentence:
@@ -196,7 +213,6 @@ def test_rmc_sentences():
                 print('Data is Valid:', my_gps.valid)
                 assert my_gps.compass_direction() == rmc_compass[sentence_count]
                 print('Compass Direction:', my_gps.compass_direction())
-                sentence_count += 1
     assert my_gps.clean_sentences == len(test_RMC)
     assert my_gps.parsed_sentences == len(test_RMC)
     assert my_gps.crc_fails == 0
@@ -205,7 +221,6 @@ def test_rmc_sentences():
 def test_vtg_sentences():
     my_gps = MicropyGPS()
     sentence = ''
-    sentence_count = 0
     print('')
     for VTG_sentence in test_VTG:
         for y in VTG_sentence:
@@ -223,7 +238,6 @@ def test_vtg_sentences():
                 print('Course', my_gps.course)
                 assert my_gps.compass_direction() == 'SW'
                 print('Compass Direction:', my_gps.compass_direction())
-                sentence_count += 1
     assert my_gps.clean_sentences == len(test_VTG)
     assert my_gps.parsed_sentences == len(test_VTG)
     assert my_gps.crc_fails == 0
@@ -232,35 +246,33 @@ def test_vtg_sentences():
 def test_gga_sentences():
     my_gps = MicropyGPS()
     sentence = ''
-    sentence_count = 0
     print('')
-    for GGA_sentence in test_GGA:
+    for sentence_count, GGA_sentence in enumerate(test_GGA):
         for y in GGA_sentence:
             sentence = my_gps.update(y)
             if sentence:
                 assert sentence == "GPGGA"
                 print('Parsed a', sentence, 'Sentence')
-                assert my_gps.gps_segments == ['GPGGA', '180050.896', '3749.1802', 'N', '08338.7865', 'W', '1', '07', '1.1', '397.4', 'M', '-32.5', 'M', '', '0000', '6C']
+                assert my_gps.gps_segments == gga_parsed_strings[sentence_count]
                 print('Parsed Strings', my_gps.gps_segments)
-                assert my_gps.crc_xor == 0x6c
+                assert my_gps.crc_xor == gga_crc_xors[sentence_count]
                 print('Sentence CRC Value:', hex(my_gps.crc_xor))
-                assert my_gps.longitude == [83, 38.7865, 'W']
+                assert my_gps.longitude == gga_longitudes[sentence_count]
                 print('Longitude', my_gps.longitude)
-                assert my_gps.latitude == [37, 49.1802, 'N']
+                assert my_gps.latitude == gga_latitudes[sentence_count]
                 print('Latitude', my_gps.latitude)
-                assert my_gps.timestamp == [18, 0, 50.896]
+                assert my_gps.timestamp == gga_timestamps[sentence_count]
                 print('UTC Timestamp:', my_gps.timestamp)
-                assert my_gps.fix_stat == 1
+                assert my_gps.fix_stat == gga_fixes[sentence_count]
                 print('Fix Status:', my_gps.fix_stat)
-                assert my_gps.altitude == 397.4
+                assert my_gps.altitude == gga_altitudes[sentence_count]
                 print('Altitude:', my_gps.altitude)
-                assert my_gps.geoid_height == -32.5
+                assert my_gps.geoid_height == gga_geoid_heights[sentence_count]
                 print('Height Above Geoid:', my_gps.geoid_height)
-                assert my_gps.hdop == 1.1
+                assert my_gps.hdop == gga_hdops[sentence_count]
                 print('Horizontal Dilution of Precision:', my_gps.hdop)
-                assert my_gps.satellites_in_use == 7
+                assert my_gps.satellites_in_use == gga_satellites_in_uses[sentence_count]
                 print('Satellites in Use by Receiver:', my_gps.satellites_in_use)
-                sentence_count += 1
     assert my_gps.clean_sentences == len(test_GGA)
     assert my_gps.parsed_sentences == len(test_GGA)
     assert my_gps.crc_fails == 0
@@ -269,9 +281,8 @@ def test_gga_sentences():
 def test_gsa_sentences():
     my_gps = MicropyGPS()
     sentence = ''
-    sentence_count = 0
     print('')
-    for GSA_sentence in test_GSA:
+    for sentence_count, GSA_sentence in enumerate(test_GSA):
         for y in GSA_sentence:
             sentence = my_gps.update(y)
             if sentence:
@@ -291,7 +302,6 @@ def test_gsa_sentences():
                 print('Vertical Dilution of Precision:', my_gps.vdop)
                 assert my_gps.pdop == gsa_pdop[sentence_count]
                 print('Position Dilution of Precision:', my_gps.pdop)
-                sentence_count += 1
     assert my_gps.clean_sentences == len(test_GSA)
     assert my_gps.parsed_sentences == len(test_GSA)
     assert my_gps.crc_fails == 0
@@ -300,9 +310,8 @@ def test_gsa_sentences():
 def test_gsv_sentences():
     my_gps = MicropyGPS()
     sentence = ''
-    sentence_count = 0
     print('')
-    for GSV_sentence in test_GSV:
+    for sentence_count, GSV_sentence in enumerate(test_GSV):
         for y in GSV_sentence:
             sentence = my_gps.update(y)
             if sentence:
@@ -329,7 +338,6 @@ def test_gsv_sentences():
                     print('Current Satellites Visible:', my_gps.satellites_visible())
                 assert my_gps.satellite_data == gsv_sat_data[sentence_count]
                 assert my_gps.satellites_visible() == gsv_sats_in_view[sentence_count]
-                sentence_count += 1
     assert my_gps.clean_sentences == len(test_GSV)
     assert my_gps.parsed_sentences == len(test_GSV)
     assert my_gps.crc_fails == 0
@@ -338,9 +346,8 @@ def test_gsv_sentences():
 def test_gll_sentences():
     my_gps = MicropyGPS()
     sentence = ''
-    sentence_count = 0
     print('')
-    for GLL_sentence in test_GLL:
+    for sentence_count, GLL_sentence in enumerate(test_GLL):
         for y in GLL_sentence:
             sentence = my_gps.update(y)
             if sentence:
@@ -358,7 +365,6 @@ def test_gll_sentences():
                 print('UTC Timestamp:', my_gps.timestamp)
                 assert my_gps.valid == gll_valid[sentence_count]
                 print('Data is Valid:', my_gps.valid)
-                sentence_count += 1
     assert my_gps.clean_sentences == len(test_GLL)
     assert my_gps.parsed_sentences == len(test_GLL)
     assert my_gps.crc_fails == 0
@@ -392,7 +398,7 @@ def test_pretty_print():
     for RMC_sentence in test_RMC[5]:
         for y in RMC_sentence:
             my_gps.update(y)
-    for GGA_sentence in test_GGA:
+    for GGA_sentence in test_GGA[2]:
         for y in GGA_sentence:
             my_gps.update(y)
     for VTG_sentence in test_VTG:
