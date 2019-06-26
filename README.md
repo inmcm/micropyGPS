@@ -20,14 +20,14 @@ Features:
 Install by cloning from git and running install via setuptools.
 
 ```sh
-git clone https://github.com/bsdz/micropyGPS.git
+git clone https://github.com/inmcm/micropyGPS.git
 python setup.py install
 ```
 
 Or install directly from github using pip.
 
 ```sh
-pip install git+https://github.com/bsdz/micropyGPS.git
+pip install git+https://github.com/inmcm/micropyGPS.git
 ```
 
 To uninstall use the following pip command.
