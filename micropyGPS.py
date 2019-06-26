@@ -654,6 +654,12 @@ class MicropyGPS(object):
         else:
             return False
 
+    def unset_satellite_data_updated(self):
+        """
+        Mark GSV sentences as read indicating the data has been used and future updates are fresh
+        """
+        self.last_sv_sentence = 0
+
     def satellites_visible(self):
         """
         Returns a list of of the satellite PRNs currently visible to the receiver
