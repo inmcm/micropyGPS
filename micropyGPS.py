@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 # MicropyGPS - a GPS NMEA sentence parser for Micropython/Python 3.X
 # Copyright (c) 2017 Michael Calvin McCoy (calvin.mccoy@protonmail.com)
@@ -43,9 +45,7 @@ class MicropyGPS(object):
         Setup GPS Object Status Flags, Internal Data Registers, etc
             local_offset (int): Timzone Difference to UTC
             location_formatting (str): Style For Presenting Longitude/Latitude:
-                                       Decimal Degree Minute (ddm) - 40° 26.767′ N
-                                       Degrees Minutes Seconds (dms) - 40° 26′ 46″ N
-                                       Decimal Degrees (dd) - 40.446° N
+     
         """
 
         #####################
@@ -86,12 +86,25 @@ class MicropyGPS(object):
         self.geoid_height = 0.0
 
         # GPS Info
-        self.satellites_in_view = 0
+        self.gsatellites_in_view = 0
+        self.rsatellites_in_view = 0
+        self.esatellites_in_view = 0
+        
         self.satellites_in_use = 0
         self.satellites_used = []
-        self.last_sv_sentence = 0
-        self.total_sv_sentences = 0
-        self.satellite_data = dict()
+        
+        self.last_gsv_sentence = 0
+        self.total_gsv_sentences = 0
+        self.gsatellite_data = dict()
+        
+        self.last_rsv_sentence = 0
+        self.total_rsv_sentences = 0
+        self.rsatellite_data = dict()
+        
+        self.last_esv_sentence = 0
+        self.total_esv_sentences = 0
+        self.esatellite_data = dict()
+        
         self.hdop = 0.0
         self.pdop = 0.0
         self.vdop = 0.0
@@ -477,20 +490,20 @@ class MicropyGPS(object):
         """Parse Satellites in View (GSV) sentence. Updates number of SV Sentences,the number of the last SV sentence
         parsed, and data on each satellite present in the sentence"""
         try:
-            num_sv_sentences = int(self.gps_segments[1])
-            current_sv_sentence = int(self.gps_segments[2])
-            sats_in_view = int(self.gps_segments[3])
+            num_gsv_sentences = int(self.gps_segments[1])
+            current_gsv_sentence = int(self.gps_segments[2])
+            gsats_in_view = int(self.gps_segments[3])
         except ValueError:
             return False
 
         # Create a blank dict to store all the satellite data from this sentence in:
         # satellite PRN is key, tuple containing telemetry is value
-        satellite_dict = dict()
+        gsatellite_dict = dict()
 
         # Calculate  Number of Satelites to pull data for and thus how many segment positions to read
-        if num_sv_sentences == current_sv_sentence:
+        if num_gsv_sentences == current_gsv_sentence:
             # Last sentence may have 1-4 satellites; 5 - 20 positions
-            sat_segment_limit = (sats_in_view - ((num_sv_sentences - 1) * 4)) * 5
+            sat_segment_limit = (gsats_in_view - ((num_gsv_sentences - 1) * 4)) * 5
         else:
             sat_segment_limit = 20  # Non-last sentences have 4 satellites and thus read up to position 20
 
@@ -523,19 +536,151 @@ class MicropyGPS(object):
                 break
 
             # Add Satellite Data to Sentence Dict
-            satellite_dict[sat_id] = (elevation, azimuth, snr)
+            gsatellite_dict[sat_id] = (elevation, azimuth, snr)
 
         # Update Object Data
-        self.total_sv_sentences = num_sv_sentences
-        self.last_sv_sentence = current_sv_sentence
-        self.satellites_in_view = sats_in_view
+        self.total_gsv_sentences = num_gsv_sentences
+        self.last_gsv_sentence = current_gsv_sentence
+        self.gsatellites_in_view = gsats_in_view
 
         # For a new set of sentences, we either clear out the existing sat data or
         # update it as additional SV sentences are parsed
-        if current_sv_sentence == 1:
-            self.satellite_data = satellite_dict
+        if current_gsv_sentence == 1:
+            self.gsatellite_data = gsatellite_dict
         else:
-            self.satellite_data.update(satellite_dict)
+            self.gsatellite_data.update(gsatellite_dict)
+
+        return True
+    
+    def glgsv(self):
+        """Parse Satellites in View (GSV) sentence. Updates number of SV Sentences,the number of the last SV sentence
+        parsed, and data on each satellite present in the sentence"""
+        try:
+            num_rsv_sentences = int(self.gps_segments[1])
+            current_rsv_sentence = int(self.gps_segments[2])
+            rsats_in_view = int(self.gps_segments[3])
+        except ValueError:
+            return False
+
+        # Create a blank dict to store all the satellite data from this sentence in:
+        # satellite PRN is key, tuple containing telemetry is value
+        rsatellite_dict = dict()
+
+        # Calculate  Number of Satelites to pull data for and thus how many segment positions to read
+        if num_rsv_sentences == current_rsv_sentence:
+            # Last sentence may have 1-4 satellites; 5 - 20 positions
+            sat_segment_limit = (rsats_in_view - ((num_rsv_sentences - 1) * 4)) * 5
+        else:
+            sat_segment_limit = 20  # Non-last sentences have 4 satellites and thus read up to position 20
+
+        # Try to recover data for up to 4 satellites in sentence
+        for sats in range(4, sat_segment_limit, 4):
+
+            # If a PRN is present, grab satellite data
+            if self.gps_segments[sats]:
+                try:
+                    sat_id = int(self.gps_segments[sats])
+                except (ValueError,IndexError):
+                    return False
+
+                try:  # elevation can be null (no value) when not tracking
+                    elevation = int(self.gps_segments[sats+1])
+                except (ValueError,IndexError):
+                    elevation = None
+
+                try:  # azimuth can be null (no value) when not tracking
+                    azimuth = int(self.gps_segments[sats+2])
+                except (ValueError,IndexError):
+                    azimuth = None
+
+                try:  # SNR can be null (no value) when not tracking
+                    snr = int(self.gps_segments[sats+3])
+                except (ValueError,IndexError):
+                    snr = None
+            # If no PRN is found, then the sentence has no more satellites to read
+            else:
+                break
+
+            # Add Satellite Data to Sentence Dict
+            rsatellite_dict[sat_id] = (elevation, azimuth, snr)
+
+        # Update Object Data
+        self.total_rsv_sentences = num_rsv_sentences
+        self.last_rsv_sentence = current_rsv_sentence
+        self.rsatellites_in_view = rsats_in_view
+
+        # For a new set of sentences, we either clear out the existing sat data or
+        # update it as additional SV sentences are parsed
+        if current_rsv_sentence == 1:
+            self.rsatellite_data = rsatellite_dict
+        else:
+            self.rsatellite_data.update(rsatellite_dict)
+
+        return True
+    
+    def gagsv(self):
+        """Parse Satellites in View (GSV) sentence. Updates number of SV Sentences,the number of the last SV sentence
+        parsed, and data on each satellite present in the sentence"""
+        try:
+            num_esv_sentences = int(self.gps_segments[1])
+            current_esv_sentence = int(self.gps_segments[2])
+            esats_in_view = int(self.gps_segments[3])
+        except ValueError:
+            return False
+
+        # Create a blank dict to store all the satellite data from this sentence in:
+        # satellite PRN is key, tuple containing telemetry is value
+        esatellite_dict = dict()
+
+        # Calculate  Number of Satelites to pull data for and thus how many segment positions to read
+        if num_esv_sentences == current_esv_sentence:
+            # Last sentence may have 1-4 satellites; 5 - 20 positions
+            sat_segment_limit = (esats_in_view - ((num_esv_sentences - 1) * 4)) * 5
+        else:
+            sat_segment_limit = 20  # Non-last sentences have 4 satellites and thus read up to position 20
+
+        # Try to recover data for up to 4 satellites in sentence
+        for sats in range(4, sat_segment_limit, 4):
+
+            # If a PRN is present, grab satellite data
+            if self.gps_segments[sats]:
+                try:
+                    sat_id = int(self.gps_segments[sats])
+                except (ValueError,IndexError):
+                    return False
+
+                try:  # elevation can be null (no value) when not tracking
+                    elevation = int(self.gps_segments[sats+1])
+                except (ValueError,IndexError):
+                    elevation = None
+
+                try:  # azimuth can be null (no value) when not tracking
+                    azimuth = int(self.gps_segments[sats+2])
+                except (ValueError,IndexError):
+                    azimuth = None
+
+                try:  # SNR can be null (no value) when not tracking
+                    snr = int(self.gps_segments[sats+3])
+                except (ValueError,IndexError):
+                    snr = None
+            # If no PRN is found, then the sentence has no more satellites to read
+            else:
+                break
+
+            # Add Satellite Data to Sentence Dict
+            esatellite_dict[sat_id] = (elevation, azimuth, snr)
+
+        # Update Object Data
+        self.total_esv_sentences = num_esv_sentences
+        self.last_esv_sentence = current_esv_sentence
+        self.esatellites_in_view = esats_in_view
+
+        # For a new set of sentences, we either clear out the existing sat data or
+        # update it as additional SV sentences are parsed
+        if current_esv_sentence == 1:
+            self.esatellite_data = esatellite_dict
+        else:
+            self.esatellite_data.update(esatellite_dict)
 
         return True
 
@@ -819,7 +964,7 @@ class MicropyGPS(object):
                            'GPGGA': gpgga, 'GLGGA': gpgga,
                            'GPVTG': gpvtg, 'GLVTG': gpvtg,
                            'GPGSA': gpgsa, 'GLGSA': gpgsa,
-                           'GPGSV': gpgsv, 'GLGSV': gpgsv,
+                           'GPGSV': gpgsv, 'GLGSV': glgsv, 'GAGSV': gagsv,
                            'GPGLL': gpgll, 'GLGLL': gpgll,
                            'GNGGA': gpgga, 'GNRMC': gprmc,
                            'GNVTG': gpvtg, 'GNGLL': gpgll,
