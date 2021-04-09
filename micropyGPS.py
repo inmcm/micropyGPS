@@ -333,8 +333,8 @@ class MicropyGPS(object):
     def gpvtg(self):
         """Parse Track Made Good and Ground Speed (VTG) Sentence. Updates speed and course"""
         try:
-            course = float(self.gps_segments[1])
-            spd_knt = float(self.gps_segments[5])
+            course = float(self.gps_segments[1]) if self.gps_segments[1] else 0.0
+            spd_knt = float(self.gps_segments[5]) if self.gps_segments[5] else 0.0
         except ValueError:
             return False
 
