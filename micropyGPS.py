@@ -185,7 +185,7 @@ class MicropyGPS(object):
                 hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
-                self.timestamp = (hours, minutes, seconds)
+                self.timestamp = [hours, minutes, seconds]
             else:  # No Time stamp yet
                 self.timestamp = [0, 0, 0.0]
 
@@ -283,7 +283,7 @@ class MicropyGPS(object):
                 hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
-                self.timestamp = (hours, minutes, seconds)
+                self.timestamp = [hours, minutes, seconds]
             else:  # No Time stamp yet
                 self.timestamp = [0, 0, 0.0]
 
