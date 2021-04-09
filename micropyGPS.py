@@ -72,7 +72,7 @@ class MicropyGPS(object):
         #####################
         # Data From Sentences
         # Time
-        self.timestamp = [0, 0, 0]
+        self.timestamp = [0, 0, 0.0]
         self.date = [0, 0, 0]
         self.local_offset = local_offset
 
@@ -187,7 +187,7 @@ class MicropyGPS(object):
                 seconds = float(utc_string[4:])
                 self.timestamp = (hours, minutes, seconds)
             else:  # No Time stamp yet
-                self.timestamp = (0, 0, 0)
+                self.timestamp = [0, 0, 0.0]
 
         except ValueError:  # Bad Timestamp value present
             return False
@@ -285,7 +285,7 @@ class MicropyGPS(object):
                 seconds = float(utc_string[4:])
                 self.timestamp = (hours, minutes, seconds)
             else:  # No Time stamp yet
-                self.timestamp = (0, 0, 0)
+                self.timestamp = [0, 0, 0.0]
 
         except ValueError:  # Bad Timestamp value present
             return False
