@@ -72,7 +72,7 @@ class MicropyGPS(object):
         #####################
         # Data From Sentences
         # Time
-        self.timestamp = [0, 0, 0]
+        self.timestamp = [0, 0, 0.0]
         self.date = [0, 0, 0]
         self.local_offset = local_offset
 
@@ -185,9 +185,9 @@ class MicropyGPS(object):
                 hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
-                self.timestamp = (hours, minutes, seconds)
+                self.timestamp = [hours, minutes, seconds]
             else:  # No Time stamp yet
-                self.timestamp = (0, 0, 0)
+                self.timestamp = [0, 0, 0.0]
 
         except ValueError:  # Bad Timestamp value present
             return False
@@ -283,9 +283,9 @@ class MicropyGPS(object):
                 hours = (int(utc_string[0:2]) + self.local_offset) % 24
                 minutes = int(utc_string[2:4])
                 seconds = float(utc_string[4:])
-                self.timestamp = (hours, minutes, seconds)
+                self.timestamp = [hours, minutes, seconds]
             else:  # No Time stamp yet
-                self.timestamp = (0, 0, 0)
+                self.timestamp = [0, 0, 0.0]
 
         except ValueError:  # Bad Timestamp value present
             return False
@@ -333,8 +333,8 @@ class MicropyGPS(object):
     def gpvtg(self):
         """Parse Track Made Good and Ground Speed (VTG) Sentence. Updates speed and course"""
         try:
-            course = float(self.gps_segments[1])
-            spd_knt = float(self.gps_segments[5])
+            course = float(self.gps_segments[1]) if self.gps_segments[1] else 0.0
+            spd_knt = float(self.gps_segments[5]) if self.gps_segments[5] else 0.0
         except ValueError:
             return False
 
