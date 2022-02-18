@@ -1,3 +1,6 @@
+#This program shows raw GPS messages received over the serial port, just to check if the data reception is ok.
+#You may have to adjust the speed, according with your GPS: for example: 4800, 9600, 19200...
+
 from machine import UART
 
 uart = UART(2, tx=17, rx=16)
