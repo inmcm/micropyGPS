@@ -427,9 +427,9 @@ def test_coordinate_representations():
         for y in RMC_sentence:
             my_gps.update(y)
     print('')
-    assert my_gps.latitude_string() == '53.361336666666666° N'
+    assert my_gps.latitude_string() == '53.361336666666666°'
     print('Decimal Degrees Latitude:', my_gps.latitude_string())
-    assert my_gps.longitude_string() == '6.5056183333333335° W'
+    assert my_gps.longitude_string() == '-6.5056183333333335°'
     print('Decimal Degrees Longitude:', my_gps.longitude_string())
     my_gps.coord_format = 'dms'
     print('Degrees Minutes Seconds Latitude:', my_gps.latitude_string())
