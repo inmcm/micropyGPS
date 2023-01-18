@@ -45,7 +45,7 @@ class MicropyGPS(object):
             location_formatting (str): Style For Presenting Longitude/Latitude:
                                        Decimal Degree Minute (ddm) - 40° 26.767′ N
                                        Degrees Minutes Seconds (dms) - 40° 26′ 46″ N
-                                       Decimal Degrees (dd) - 40.446° N
+                                       Decimal Degrees (dd) - 40.446°
         """
 
         #####################
@@ -107,7 +107,8 @@ class MicropyGPS(object):
         """Format Latitude Data Correctly"""
         if self.coord_format == 'dd':
             decimal_degrees = self._latitude[0] + (self._latitude[1] / 60)
-            return [decimal_degrees, self._latitude[2]]
+            sign_dd = (self._latitude[2] == 'N') - (self._latitude[2] == 'S')
+            return sign_dd * decimal_degrees
         elif self.coord_format == 'dms':
             minute_parts = modf(self._latitude[1])
             seconds = round(minute_parts[0] * 60)
@@ -120,7 +121,8 @@ class MicropyGPS(object):
         """Format Longitude Data Correctly"""
         if self.coord_format == 'dd':
             decimal_degrees = self._longitude[0] + (self._longitude[1] / 60)
-            return [decimal_degrees, self._longitude[2]]
+            sign_dd = (self._longitude[2] == 'E') - (self._longitude[2] == 'W')
+            return sign_dd * decimal_degrees
         elif self.coord_format == 'dms':
             minute_parts = modf(self._longitude[1])
             seconds = round(minute_parts[0] * 60)
@@ -709,7 +711,7 @@ class MicropyGPS(object):
         """
         if self.coord_format == 'dd':
             formatted_latitude = self.latitude
-            lat_string = str(formatted_latitude[0]) + '° ' + str(self._latitude[2])
+            lat_string = str(formatted_latitude) + '°'
         elif self.coord_format == 'dms':
             formatted_latitude = self.latitude
             lat_string = str(formatted_latitude[0]) + '° ' + str(formatted_latitude[1]) + "' " + str(formatted_latitude[2]) + '" ' + str(formatted_latitude[3])
@@ -724,7 +726,7 @@ class MicropyGPS(object):
         """
         if self.coord_format == 'dd':
             formatted_longitude = self.longitude
-            lon_string = str(formatted_longitude[0]) + '° ' + str(self._longitude[2])
+            lon_string = str(formatted_longitude) + '°'
         elif self.coord_format == 'dms':
             formatted_longitude = self.longitude
             lon_string = str(formatted_longitude[0]) + '° ' + str(formatted_longitude[1]) + "' " + str(formatted_longitude[2]) + '" ' + str(formatted_longitude[3])
