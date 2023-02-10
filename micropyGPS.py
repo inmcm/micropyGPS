@@ -615,10 +615,10 @@ class MicropyGPS(object):
                     self.clean_sentences += 1  # Increment clean sentences received
                     self.sentence_active = False  # Clear Active Processing Flag
 
-                    if self.gps_segments[0] in self.supported_sentences:
+                    if self.gps_segments[0][2:] in self.supported_sentences:
 
                         # parse the Sentence Based on the message type, return True if parse is clean
-                        if self.supported_sentences[self.gps_segments[0]](self):
+                        if self.supported_sentences[self.gps_segments[0][2:]](self):
 
                             # Let host know that the GPS object was updated by returning parsed sentence type
                             self.parsed_sentences += 1
@@ -815,15 +815,12 @@ class MicropyGPS(object):
         return date_string
 
     # All the currently supported NMEA sentences
-    supported_sentences = {'GPRMC': gprmc, 'GLRMC': gprmc,
-                           'GPGGA': gpgga, 'GLGGA': gpgga,
-                           'GPVTG': gpvtg, 'GLVTG': gpvtg,
-                           'GPGSA': gpgsa, 'GLGSA': gpgsa,
-                           'GPGSV': gpgsv, 'GLGSV': gpgsv,
-                           'GPGLL': gpgll, 'GLGLL': gpgll,
-                           'GNGGA': gpgga, 'GNRMC': gprmc,
-                           'GNVTG': gpvtg, 'GNGLL': gpgll,
-                           'GNGSA': gpgsa,
+    supported_sentences = {'RMC': gprmc,
+                           'GGA': gpgga,
+                           'VTG': gpvtg,
+                           'GSA': gpgsa,
+                           'GSV': gpgsv,
+                           'GLL': gpgll,
                           }
 
 if __name__ == "__main__":
