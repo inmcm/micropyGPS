@@ -432,6 +432,10 @@ class MicropyGPS(object):
         fix calculation, Position Dilution of Precision (PDOP), Horizontal Dilution of Precision (HDOP), Vertical
         Dilution of Precision, and fix status"""
 
+        # Require all fields through VDOP plus the checksum before reading data.
+        if len(self.gps_segments) < 19:
+            return False
+
         # Fix Type (None,2D or 3D)
         try:
             fix_type = int(self.gps_segments[2])

@@ -8,6 +8,7 @@ Tests for micropyGPS module
 # MIT License (MIT) - see LICENSE file
 """
 import hashlib
+import pytest
 from micropyGPS import MicropyGPS
 
 test_RMC = ['$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62\n',
@@ -305,6 +306,72 @@ def test_gsa_sentences():
     assert my_gps.clean_sentences == len(test_GSA)
     assert my_gps.parsed_sentences == len(test_GSA)
     assert my_gps.crc_fails == 0
+
+
+def _gsa_sentence(fields):
+    payload = ','.join(fields)
+    checksum = 0
+    for char in payload:
+        checksum ^= ord(char)
+    return '$%s*%02X\n' % (payload, checksum)
+
+
+def _feed_sentence(gps, sentence):
+    parsed = None
+    for char in sentence:
+        result = gps.update(char)
+        if result is not None:
+            parsed = result
+    return parsed
+
+
+@pytest.mark.parametrize('talker', ['GP', 'GL', 'GN'])
+@pytest.mark.parametrize('field_count', range(1, 18))
+def test_gsa_truncated_sentence_preserves_fix(talker, field_count):
+    gps = MicropyGPS()
+    gps.fix_type = 2
+    gps.satellites_used = [42]
+    gps.pdop, gps.hdop, gps.vdop = 9.1, 9.2, 9.3
+    gps.fix_time = -1
+    # All twelve PRNs are present so truncation also exercises satellite access.
+    fields = [talker + 'GSA', 'A', '3'] + ['01'] * 12 + ['2.0', '1.1', '1.7']
+    before = (gps.fix_type, list(gps.satellites_used), gps.pdop,
+              gps.hdop, gps.vdop, gps.fix_time)
+
+    assert _feed_sentence(gps, _gsa_sentence(fields[:field_count])) is None
+    assert (gps.fix_type, gps.satellites_used, gps.pdop,
+            gps.hdop, gps.vdop, gps.fix_time) == before
+    assert gps.parsed_sentences == 0
+    assert gps.clean_sentences == 1
+    assert gps.crc_fails == 0
+
+    # A rejected message must not prevent the next valid message being parsed.
+    assert _feed_sentence(gps, _gsa_sentence(fields)) == talker + 'GSA'
+    assert gps.fix_type == 3
+    assert gps.satellites_used == [1] * 12
+    assert (gps.pdop, gps.hdop, gps.vdop) == (2.0, 1.1, 1.7)
+    assert gps.fix_time != -1
+    assert gps.parsed_sentences == 1
+    assert gps.clean_sentences == 2
+    assert gps.crc_fails == 0
+
+
+@pytest.mark.parametrize('talker', ['GP', 'GL', 'GN'])
+@pytest.mark.parametrize('system_id', [False, True])
+def test_gsa_no_fix_and_optional_system_id(talker, system_id):
+    gps = MicropyGPS()
+    gps.fix_time = -1
+    fields = [talker + 'GSA', 'A', '1'] + [''] * 12 + ['2.0', '1.1', '1.7']
+    if system_id:
+        fields.append('1')
+    assert _feed_sentence(gps, _gsa_sentence(fields)) == talker + 'GSA'
+    assert gps.fix_type == 1
+    assert gps.satellites_used == []
+    assert (gps.pdop, gps.hdop, gps.vdop) == (2.0, 1.1, 1.7)
+    assert gps.fix_time == -1
+    assert gps.parsed_sentences == 1
+    assert gps.clean_sentences == 1
+    assert gps.crc_fails == 0
 
 
 def test_gsv_sentences():
