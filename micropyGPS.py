@@ -782,7 +782,10 @@ class MicropyGPS(object):
 
             day = str(self.date[0]) + suffix  # Create Day String
 
-            year = century + str(self.date[2])  # Create Year String
+            year = str(self.date[2])
+            if self.date[2] < 10:
+                year = '0' + year
+            year = century + year  # Create Year String
 
             date_string = month + ' ' + day + ', ' + year  # Put it all together
 

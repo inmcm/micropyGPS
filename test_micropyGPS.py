@@ -436,3 +436,44 @@ def test_coordinate_representations():
     assert my_gps.latitude_string() == """53° 21' 41" N"""
     assert my_gps.longitude_string() == """6° 30' 20" W"""
     print('Degrees Minutes Seconds Longitude:', my_gps.longitude_string())
+
+
+def test_long_date_year_padding():
+    my_gps = MicropyGPS()
+    for year, current_century, previous_century in (
+        (0, '2000', '1900'),
+        (5, '2005', '1905'),
+        (9, '2009', '1909'),
+        (10, '2010', '1910'),
+        (99, '2099', '1999'),
+    ):
+        my_gps.date = (4, 1, year)
+        assert my_gps.date_string('long') == 'January 4th, ' + current_century
+        assert my_gps.date_string('long', '19') == 'January 4th, ' + previous_century
+
+
+def test_short_date_year_padding():
+    my_gps = MicropyGPS()
+    for year, short_year in ((0, '00'), (5, '05'), (9, '09'), (10, '10'), (99, '99')):
+        my_gps.date = (4, 1, year)
+        assert my_gps.date_string() == '01/04/' + short_year
+        assert my_gps.date_string('s_mdy') == '01/04/' + short_year
+        assert my_gps.date_string('s_dmy') == '04/01/' + short_year
+        assert my_gps.date_string('s_mdy', '19') == '01/04/' + short_year
+        assert my_gps.date_string('s_dmy', '19') == '04/01/' + short_year
+
+
+def test_long_date_year_padding_from_rmc():
+    my_gps = MicropyGPS()
+    sentence = '$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,040105,011.3,E*68\n'
+    result = None
+    for char in sentence:
+        parsed = my_gps.update(char)
+        if parsed:
+            result = parsed
+    assert result == 'GPRMC'
+    assert my_gps.clean_sentences == 1
+    assert my_gps.parsed_sentences == 1
+    assert my_gps.crc_fails == 0
+    assert my_gps.date == (4, 1, 5)
+    assert my_gps.date_string('long') == 'January 4th, 2005'
