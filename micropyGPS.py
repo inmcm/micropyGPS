@@ -448,8 +448,6 @@ class MicropyGPS(object):
                     sats_used.append(sat_number)
                 except ValueError:
                     return False
-            else:
-                break
 
         # PDOP,HDOP,VDOP
         try:

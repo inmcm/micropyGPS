@@ -343,6 +343,16 @@ def test_gsv_sentences():
     assert my_gps.crc_fails == 0
 
 
+def test_gsa_satellites_after_empty_slots():
+    my_gps = MicropyGPS()
+    sentence = '$GPGSA,A,3,15,18,14,,,31,,,23,,,,04.5,02.1,04.0*0F'
+    for char in sentence:
+        parsed = my_gps.update(char)
+
+    assert parsed == 'GPGSA'
+    assert my_gps.satellites_used == [15, 18, 14, 31, 23]
+
+
 def test_gll_sentences():
     my_gps = MicropyGPS()
     sentence = ''
