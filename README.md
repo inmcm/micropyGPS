@@ -115,7 +115,7 @@ The current UTC time is stored (hours,minutes,seconds)
 >>> my_gps.date
 (22, 9, 05)
 ```
-The timezone can be automatically adjusted for using the by setting the ```local_offset``` when you create the object or anytime after. Setting it to ```-5``` means you are on Eastern Standard time in the United States.
+The timezone can be automatically adjusted for using the by setting the ```local_offset``` when you create the object or anytime after. Setting it to ```-5``` means you are on Eastern Standard time in the United States. Fractional-hour offsets are supported, such as ```5.5``` for India or ```5.75``` for Nepal.
 ```sh
 >>> my_gps = MicropyGPS(-5)
 >>> my_gps.local_offset
