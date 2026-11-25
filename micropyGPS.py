@@ -41,7 +41,7 @@ class MicropyGPS(object):
     def __init__(self, local_offset=0, location_formatting='ddm'):
         """
         Setup GPS Object Status Flags, Internal Data Registers, etc
-            local_offset (int): Timzone Difference to UTC
+            local_offset (float): Timezone difference to UTC, in hours
             location_formatting (str): Style For Presenting Longitude/Latitude:
                                        Decimal Degree Minute (ddm) - 40° 26.767′ N
                                        Degrees Minutes Seconds (dms) - 40° 26′ 46″ N
@@ -182,8 +182,9 @@ class MicropyGPS(object):
             utc_string = self.gps_segments[1]
 
             if utc_string:  # Possible timestamp found
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
+                total_minutes = (int(utc_string[0:2]) * 60 +
+                                 int(utc_string[2:4]) + int(self.local_offset * 60))
+                hours, minutes = divmod(total_minutes % 1440, 60)
                 seconds = float(utc_string[4:])
                 self.timestamp = [hours, minutes, seconds]
             else:  # No Time stamp yet
@@ -280,8 +281,9 @@ class MicropyGPS(object):
             utc_string = self.gps_segments[5]
 
             if utc_string:  # Possible timestamp found
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
+                total_minutes = (int(utc_string[0:2]) * 60 +
+                                 int(utc_string[2:4]) + int(self.local_offset * 60))
+                hours, minutes = divmod(total_minutes % 1440, 60)
                 seconds = float(utc_string[4:])
                 self.timestamp = [hours, minutes, seconds]
             else:  # No Time stamp yet
@@ -353,8 +355,9 @@ class MicropyGPS(object):
 
             # Skip timestamp if receiver doesn't have on yet
             if utc_string:
-                hours = (int(utc_string[0:2]) + self.local_offset) % 24
-                minutes = int(utc_string[2:4])
+                total_minutes = (int(utc_string[0:2]) * 60 +
+                                 int(utc_string[2:4]) + int(self.local_offset * 60))
+                hours, minutes = divmod(total_minutes % 1440, 60)
                 seconds = float(utc_string[4:])
             else:
                 hours = 0
